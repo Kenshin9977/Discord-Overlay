@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{529BD7A2-F3E9-4EF7-878F-C469506CFA3F}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>MAGE</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Label="UserMacros" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Properties\x86_Debug.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Properties\x86_Release.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Properties\x64_Debug.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Properties\x64_Release.props" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(ProjectName)\src\;fmt\src\;GSL\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <SourcePath>fmt\src\;$(VC_SourcePath);</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(ProjectName)\src\;fmt\src\;GSL\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <SourcePath>fmt\src\;$(VC_SourcePath);</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(ProjectName)\src\;fmt\src\;GSL\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <SourcePath>fmt\src\;$(VC_SourcePath);</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(ProjectName)\src\;fmt\src\;GSL\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <SourcePath>fmt\src\;$(VC_SourcePath);</SourcePath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ClInclude Include="MAGE\src\collection\array.hpp" />
+    <ClInclude Include="MAGE\src\collection\collection_utils.hpp" />
+    <ClInclude Include="MAGE\src\collection\dynamic_array.hpp" />
+    <ClInclude Include="MAGE\src\collection\vector.hpp" />
+    <ClInclude Include="MAGE\src\directxmath\facade.hpp" />
+    <ClInclude Include="MAGE\src\ecs\ecs.hpp" />
+    <ClInclude Include="MAGE\src\exception\exception.hpp" />
+    <ClInclude Include="MAGE\src\logging\dump.hpp" />
+    <ClInclude Include="MAGE\src\logging\logging.tpp" />
+    <ClInclude Include="MAGE\src\logging\logging.hpp" />
+    <ClInclude Include="MAGE\src\logging\progress_reporter.hpp" />
+    <ClInclude Include="MAGE\src\memory\allocation.hpp" />
+    <ClInclude Include="MAGE\src\memory\memory.hpp" />
+    <ClInclude Include="MAGE\src\memory\memory_arena.hpp" />
+    <ClInclude Include="MAGE\src\memory\memory_buffer.hpp" />
+    <ClInclude Include="MAGE\src\memory\memory_stack.hpp" />
+    <ClInclude Include="MAGE\src\parallel\id_generator.hpp" />
+    <ClInclude Include="MAGE\src\parallel\parallel.hpp" />
+    <ClInclude Include="MAGE\src\platform\windows.hpp" />
+    <ClInclude Include="MAGE\src\platform\windows_utils.hpp" />
+    <ClInclude Include="MAGE\src\string\format.hpp" />
+    <ClInclude Include="MAGE\src\string\formats.hpp" />
+    <ClInclude Include="MAGE\src\string\string.hpp" />
+    <ClInclude Include="MAGE\src\string\string_utils.hpp" />
+    <ClInclude Include="MAGE\src\system\cpu_monitor.hpp" />
+    <ClInclude Include="MAGE\src\system\game_timer.hpp" />
+    <ClInclude Include="MAGE\src\system\system_time.hpp" />
+    <ClInclude Include="MAGE\src\system\system_usage.hpp" />
+    <ClInclude Include="MAGE\src\system\timer.hpp" />
+    <ClInclude Include="MAGE\src\type\atomic_types.hpp" />
+    <ClInclude Include="MAGE\src\type\scalar_types.hpp" />
+    <ClInclude Include="MAGE\src\type\types.hpp" />
+    <ClInclude Include="MAGE\src\type\vector_types.hpp" />
+    <ClInclude Include="MAGE\src\ui\window.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="MAGE\src\exception\exception.tpp" />
+    <None Include="MAGE\src\memory\memory.tpp" />
+    <None Include="MAGE\src\memory\memory_arena.tpp" />
+    <None Include="MAGE\src\memory\memory_stack.tpp" />
+    <None Include="MAGE\src\platform\windows_utils.tpp" />
+    <None Include="MAGE\src\string\format.tpp" />
+    <None Include="MAGE\src\string\string_utils.tpp" />
+    <None Include="MAGE\src\system\timer.tpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="MAGE\src\exception\exception.cpp" />
+    <ClCompile Include="MAGE\src\logging\dump.cpp" />
+    <ClCompile Include="MAGE\src\logging\logging.cpp" />
+    <ClCompile Include="MAGE\src\logging\progress_reporter.cpp" />
+    <ClCompile Include="MAGE\src\memory\memory_arena.cpp" />
+    <ClCompile Include="MAGE\src\memory\memory_stack.cpp" />
+    <ClCompile Include="MAGE\src\parallel\id_generator.cpp" />
+    <ClCompile Include="MAGE\src\parallel\parallel.cpp" />
+    <ClCompile Include="MAGE\src\string\string_utils.cpp" />
+    <ClCompile Include="MAGE\src\system\system_time.cpp" />
+    <ClCompile Include="MAGE\src\system\system_usage.cpp" />
+    <ClCompile Include="MAGE\src\ui\window.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

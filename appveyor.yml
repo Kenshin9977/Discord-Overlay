@@ -1,0 +1,36 @@
+###############################################################################
+# General Configuration
+###############################################################################
+version: 2.0.{build}
+
+###############################################################################
+# Environment Configuration
+###############################################################################
+image: Visual Studio 2019
+
+configuration: 
+ - Release
+ - Debug
+platform: 
+  - x64
+  - x86
+environment:
+  matrix:
+  - solution_name: "Projects/Project1/Demo.sln"
+  - solution_name: "Projects/Project2/Demo.sln"
+  - solution_name: "Projects/Project3/Demo.sln"
+  - solution_name: "Projects/Project4/Demo.sln"
+  - solution_name: "Projects/Project5/Demo.sln"
+  - solution_name: "Projects/Project6/Demo.sln"
+  - solution_name: "Projects/Project7/Demo.sln"
+  - solution_name: "Projects/Project8/Demo.sln"
+
+###############################################################################
+# Build Configuration
+###############################################################################
+build:
+  parallel: true
+  verbosity: normal
+
+build_script:
+  - msbuild %solution_name%
