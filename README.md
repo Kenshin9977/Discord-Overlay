@@ -1,5 +1,6 @@
 # Discord-Overlay
-Based on the idea of Discord Overlay Host I made an updated version as it wasn't updated in 5 years and accumulated a lot of issues.
+A DirectX 11 window to host Discord's Overlay in order to capture and display it with OBS.
+Based on the idea of [Discord Overlay Host](https://obsproject.com/forum/resources/discord-overlay-host.371/) I made an updated version as it wasn't updated in 5 years and accumulated a lot of issues.
 
 ## Compatibility
 You should only need to have a DirectX 11 capable GPU to run the program.
