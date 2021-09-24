@@ -301,6 +301,6 @@ int WINAPI WinMain(_In_ HINSTANCE instance,
 	}
 	
 	windowScaleFactor = (double)(int)(windowScaleFactor * 100 + .5) / 100; //Limit the precision of the scale factor to double digit decimal
-	Init(NotNull< HINSTANCE >(instance), {UINT32(windowScaleFactor*768), UINT32(windowScaleFactor *432)});
+	Init(NotNull< HINSTANCE >(instance), {UINT32(windowScaleFactor*769), UINT32(windowScaleFactor *433)});
 	return Run(nCmdShow);
 }
