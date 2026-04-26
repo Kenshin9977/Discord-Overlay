@@ -44,6 +44,7 @@ internal sealed class Program
         builder.Services.AddDiscordRpcClient();
         builder.Services.AddDiscordVoiceChannelWatcher();
         builder.Services.AddDiscordOAuth();
+        builder.Services.AddDpapiCredentialStore();
         builder.Services.AddHostedService<AppHostedService>();
         builder.Services.AddSingleton<TrayApplicationContext>();
 

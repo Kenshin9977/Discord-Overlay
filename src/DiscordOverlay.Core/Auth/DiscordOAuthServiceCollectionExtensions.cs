@@ -1,4 +1,6 @@
+using System.Runtime.Versioning;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace DiscordOverlay.Core.Auth;
 
@@ -11,6 +13,14 @@ public static class DiscordOAuthServiceCollectionExtensions
             client.Timeout = TimeSpan.FromSeconds(15);
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Discord-Overlay (https://github.com/kenshin993355/Discord-Overlay)");
         });
+        return services;
+    }
+
+    [SupportedOSPlatform("windows")]
+    public static IServiceCollection AddDpapiCredentialStore(this IServiceCollection services)
+    {
+        services.AddOptions<DiscordCredentialStoreOptions>();
+        services.TryAddSingleton<IDiscordCredentialStore, DpapiDiscordCredentialStore>();
         return services;
     }
 }
