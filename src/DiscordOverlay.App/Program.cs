@@ -1,4 +1,5 @@
 using DiscordOverlay.App.Hosting;
+using DiscordOverlay.Core.Discord;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -39,6 +40,7 @@ internal sealed class Program
                 shared: true,
                 outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
 
+        builder.Services.AddDiscordRpcClient();
         builder.Services.AddHostedService<AppHostedService>();
         builder.Services.AddSingleton<TrayApplicationContext>();
 
