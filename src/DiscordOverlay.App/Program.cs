@@ -42,6 +42,7 @@ internal sealed class Program
                 outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
 
         builder.Services.AddDiscordRpcClient();
+        builder.Services.AddDiscordVoiceChannelWatcher();
         builder.Services.AddDiscordOAuth();
         builder.Services.AddHostedService<AppHostedService>();
         builder.Services.AddSingleton<TrayApplicationContext>();

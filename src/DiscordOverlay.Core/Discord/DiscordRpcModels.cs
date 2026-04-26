@@ -58,3 +58,11 @@ public sealed class DiscordVoiceChannelSelectedEventArgs : EventArgs
     public required string? ChannelId { get; init; }
     public required string? GuildId { get; init; }
 }
+
+public sealed class DiscordRpcVoiceChannel
+{
+    [JsonPropertyName("id")] public required string Id { get; init; }
+    [JsonPropertyName("guild_id")] public string? GuildId { get; init; }
+    [JsonPropertyName("name")] public string? Name { get; init; }
+    [JsonPropertyName("type")] public int Type { get; init; }
+}

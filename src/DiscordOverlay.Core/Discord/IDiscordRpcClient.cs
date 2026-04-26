@@ -14,6 +14,8 @@ public interface IDiscordRpcClient : IAsyncDisposable
 
     Task<DiscordAuthenticateResult> AuthenticateAsync(string accessToken, CancellationToken cancellationToken = default);
 
+    Task<DiscordRpcVoiceChannel?> GetSelectedVoiceChannelAsync(CancellationToken cancellationToken = default);
+
     Task SubscribeVoiceChannelSelectAsync(CancellationToken cancellationToken = default);
 
     Task DisconnectAsync(CancellationToken cancellationToken = default);

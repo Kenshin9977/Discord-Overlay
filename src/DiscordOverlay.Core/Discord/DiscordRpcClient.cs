@@ -123,6 +123,20 @@ public sealed class DiscordRpcClient : IDiscordRpcClient
         return result;
     }
 
+    public async Task<DiscordRpcVoiceChannel?> GetSelectedVoiceChannelAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var response = await SendCommandAsync("GET_SELECTED_VOICE_CHANNEL", null, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (response.Data is not { } data || data.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        return data.Deserialize<DiscordRpcVoiceChannel>(JsonOptions);
+    }
+
     public Task SubscribeVoiceChannelSelectAsync(CancellationToken cancellationToken = default)
         => SubscribeAsync("VOICE_CHANNEL_SELECT", cancellationToken);
 
