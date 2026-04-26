@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>DiscordOverlay.App</RootNamespace>
+    <AssemblyName>DiscordOverlay</AssemblyName>
+    <ApplicationIcon>..\..\Discord-Overlay.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DiscordOverlay.Core\DiscordOverlay.Core.csproj" />
+  </ItemGroup>
+
+</Project>

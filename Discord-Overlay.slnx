@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DiscordOverlay.App/DiscordOverlay.App.csproj" />
+    <Project Path="src/DiscordOverlay.Core/DiscordOverlay.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DiscordOverlay.Core.Tests/DiscordOverlay.Core.Tests.csproj" />
+  </Folder>
+</Solution>
