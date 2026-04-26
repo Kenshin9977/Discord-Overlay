@@ -1,6 +1,7 @@
 using DiscordOverlay.App.Hosting;
 using DiscordOverlay.Core.Auth;
 using DiscordOverlay.Core.Discord;
+using DiscordOverlay.Core.Streaming;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -45,6 +46,7 @@ internal sealed class Program
         builder.Services.AddDiscordVoiceChannelWatcher();
         builder.Services.AddDiscordOAuth();
         builder.Services.AddDpapiCredentialStore();
+        builder.Services.AddObsBrowserSourceUpdater();
         builder.Services.AddHostedService<AppHostedService>();
         builder.Services.AddSingleton<TrayApplicationContext>();
 
