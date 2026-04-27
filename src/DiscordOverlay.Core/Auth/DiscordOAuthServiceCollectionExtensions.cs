@@ -23,4 +23,10 @@ public static class DiscordOAuthServiceCollectionExtensions
         services.TryAddSingleton<IDiscordCredentialStore, DpapiDiscordCredentialStore>();
         return services;
     }
+
+    public static IServiceCollection AddDiscordSession(this IServiceCollection services)
+    {
+        services.TryAddSingleton<IDiscordSession, DiscordSession>();
+        return services;
+    }
 }

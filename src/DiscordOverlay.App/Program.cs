@@ -19,6 +19,12 @@ internal sealed class Program
     {
         ApplicationConfiguration.Initialize();
 
+        // Install the Windows Forms synchronization context on the main UI
+        // thread before the host builds any singletons, so IUiDispatcher can
+        // capture this context and let background services marshal to UI.
+        SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
+        var uiSyncContext = SynchronizationContext.Current!;
+
         var logsDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "DiscordOverlay",
@@ -46,7 +52,9 @@ internal sealed class Program
         builder.Services.AddDiscordVoiceChannelWatcher();
         builder.Services.AddDiscordOAuth();
         builder.Services.AddDpapiCredentialStore();
+        builder.Services.AddDiscordSession();
         builder.Services.AddObsBrowserSourceUpdater();
+        builder.Services.AddSingleton<IUiDispatcher>(_ => new UiDispatcher(uiSyncContext));
         builder.Services.AddHostedService<AppHostedService>();
         builder.Services.AddSingleton<TrayApplicationContext>();
 
