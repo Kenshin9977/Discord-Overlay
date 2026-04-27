@@ -21,6 +21,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly IDiscordSession session;
     private readonly IOptionsMonitor<ObsConnectionOptions> obsOptions;
     private readonly AutoStartManager autoStart;
+    private readonly AppUpdater updater;
 
     private readonly NotifyIcon notifyIcon;
     private readonly System.Windows.Forms.Timer statusTimer;
@@ -34,7 +35,8 @@ public sealed class TrayApplicationContext : ApplicationContext
         ObsBrowserSourceUpdater obsUpdater,
         IDiscordSession session,
         IOptionsMonitor<ObsConnectionOptions> obsOptions,
-        AutoStartManager autoStart)
+        AutoStartManager autoStart,
+        AppUpdater updater)
     {
         this.logger = logger;
         this.lifetime = lifetime;
@@ -43,6 +45,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         this.session = session;
         this.obsOptions = obsOptions;
         this.autoStart = autoStart;
+        this.updater = updater;
 
         var menu = new ContextMenuStrip();
         channelStatusItem = new ToolStripMenuItem("Channel: starting…") { Enabled = false };
@@ -51,6 +54,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(obsStatusItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Settings…", null, OnSettingsClicked);
+        menu.Items.Add("Check for updates", null, OnCheckForUpdatesClicked);
         menu.Items.Add("Open log folder", null, OnOpenLogFolderClicked);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Quit", null, OnQuitClicked);
@@ -145,6 +149,49 @@ public sealed class TrayApplicationContext : ApplicationContext
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to open log folder at {Path}", path);
+        }
+    }
+
+    private async void OnCheckForUpdatesClicked(object? sender, EventArgs e)
+    {
+        if (!updater.IsInstalled)
+        {
+            MessageBox.Show(
+                "Updates are only available when Discord-Overlay is installed via Setup.exe (Velopack).\n\n" +
+                "You appear to be running an unpacked or developer build.",
+                "Discord-Overlay",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        notifyIcon.ShowBalloonTip(2000, "Discord-Overlay", "Checking for updates…", ToolTipIcon.Info);
+        try
+        {
+            var update = await updater.CheckForUpdatesAsync().ConfigureAwait(true);
+            if (update is null)
+            {
+                notifyIcon.ShowBalloonTip(3000, "Discord-Overlay",
+                    $"You're up to date (v{updater.CurrentVersion ?? "?"}).", ToolTipIcon.Info);
+                return;
+            }
+
+            var prompt = MessageBox.Show(
+                $"A new version is available: v{update.TargetFullRelease.Version}.\n\n" +
+                "Download and restart now?",
+                "Discord-Overlay update",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+            if (prompt == DialogResult.Yes)
+            {
+                await updater.DownloadAndApplyAsync(update).ConfigureAwait(true);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Update check from tray failed");
+            MessageBox.Show($"Update check failed: {ex.Message}", "Discord-Overlay",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 

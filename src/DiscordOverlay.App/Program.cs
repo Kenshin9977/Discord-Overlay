@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
+using Velopack;
 
 namespace DiscordOverlay.App;
 
@@ -19,6 +20,10 @@ internal sealed class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        // Velopack hook: handles --silent install, post-install/uninstall,
+        // first-run, and restart-after-update before any other code runs.
+        VelopackApp.Build().Run();
+
         ApplicationConfiguration.Initialize();
 
         // Install the Windows Forms synchronization context on the main UI
@@ -70,6 +75,7 @@ internal sealed class Program
         builder.Services.AddObsBrowserSourceUpdater();
         builder.Services.AddSingleton<IUiDispatcher>(_ => new UiDispatcher(uiSyncContext));
         builder.Services.AddSingleton<AutoStartManager>();
+        builder.Services.AddSingleton<AppUpdater>();
         builder.Services.AddHostedService<AppHostedService>();
         builder.Services.AddSingleton<TrayApplicationContext>();
 
