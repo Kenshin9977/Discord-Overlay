@@ -1,3 +1,4 @@
+using DiscordOverlay.App.Hosting;
 using DiscordOverlay.Core;
 using DiscordOverlay.Core.Auth;
 using DiscordOverlay.Core.Streaming;
@@ -7,18 +8,21 @@ namespace DiscordOverlay.App.Settings;
 public sealed class SettingsForm : Form
 {
     private readonly IDiscordSession session;
+    private readonly AutoStartManager autoStart;
 
     private readonly TextBox hostBox;
     private readonly NumericUpDown portBox;
     private readonly TextBox passwordBox;
     private readonly TextBox sourceNameBox;
+    private readonly CheckBox autoStartCheckbox;
     private readonly Label discordStatus;
     private readonly Button signOutButton;
     private readonly Label statusLabel;
 
-    public SettingsForm(IDiscordSession session, ObsConnectionOptions currentObs)
+    public SettingsForm(IDiscordSession session, ObsConnectionOptions currentObs, AutoStartManager autoStart)
     {
         this.session = session;
+        this.autoStart = autoStart;
 
         Text = "Discord-Overlay — Settings";
         StartPosition = FormStartPosition.CenterParent;
@@ -26,7 +30,7 @@ public sealed class SettingsForm : Form
         MaximizeBox = false;
         MinimizeBox = false;
         ShowInTaskbar = false;
-        ClientSize = new Size(440, 400);
+        ClientSize = new Size(460, 470);
         Font = new Font("Segoe UI", 9f);
 
         try
@@ -50,7 +54,7 @@ public sealed class SettingsForm : Form
         discordStatus = new Label
         {
             Location = new Point(16, 40),
-            Size = new Size(380, 36),
+            Size = new Size(420, 36),
             AutoSize = false,
         };
 
@@ -75,14 +79,14 @@ public sealed class SettingsForm : Form
         var hint = new Label
         {
             AutoSize = false,
-            Size = new Size(400, 30),
+            Size = new Size(430, 30),
             Location = new Point(16, 158),
             ForeColor = SystemColors.GrayText,
             Text = "In OBS: Tools → WebSocket Server Settings → Enable. Add a Browser Source named below.",
         };
 
         var hostLabel = new Label { Text = "Host:", Location = new Point(16, 200), AutoSize = true };
-        hostBox = new TextBox { Location = new Point(140, 197), Size = new Size(280, 23), Text = currentObs.Hostname };
+        hostBox = new TextBox { Location = new Point(140, 197), Size = new Size(300, 23), Text = currentObs.Hostname };
 
         var portLabel = new Label { Text = "Port:", Location = new Point(16, 230), AutoSize = true };
         portBox = new NumericUpDown
@@ -98,7 +102,7 @@ public sealed class SettingsForm : Form
         passwordBox = new TextBox
         {
             Location = new Point(140, 257),
-            Size = new Size(280, 23),
+            Size = new Size(300, 23),
             UseSystemPasswordChar = true,
             Text = currentObs.Password,
         };
@@ -107,14 +111,39 @@ public sealed class SettingsForm : Form
         sourceNameBox = new TextBox
         {
             Location = new Point(140, 287),
-            Size = new Size(280, 23),
+            Size = new Size(300, 23),
             Text = currentObs.BrowserSourceName,
+        };
+
+        // ----- Startup section -----
+        var startupHeader = new Label
+        {
+            Text = "Startup",
+            Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold),
+            AutoSize = true,
+            Location = new Point(16, 326),
+        };
+
+        autoStartCheckbox = new CheckBox
+        {
+            Text = "Start with Windows (silently in tray)",
+            Location = new Point(16, 354),
+            AutoSize = true,
+            Checked = autoStart.IsEnabled,
+        };
+
+        statusLabel = new Label
+        {
+            AutoSize = false,
+            Size = new Size(420, 24),
+            Location = new Point(16, 388),
+            ForeColor = SystemColors.GrayText,
         };
 
         var saveButton = new Button
         {
             Text = "Save",
-            Location = new Point(248, 350),
+            Location = new Point(268, 420),
             AutoSize = true,
             Padding = new Padding(12, 4, 12, 4),
             DialogResult = DialogResult.OK,
@@ -124,20 +153,12 @@ public sealed class SettingsForm : Form
         var cancelButton = new Button
         {
             Text = "Cancel",
-            Location = new Point(348, 350),
+            Location = new Point(368, 420),
             AutoSize = true,
             DialogResult = DialogResult.Cancel,
         };
         AcceptButton = saveButton;
         CancelButton = cancelButton;
-
-        statusLabel = new Label
-        {
-            AutoSize = false,
-            Size = new Size(400, 24),
-            Location = new Point(16, 320),
-            ForeColor = SystemColors.GrayText,
-        };
 
         Controls.AddRange(new Control[]
         {
@@ -150,6 +171,8 @@ public sealed class SettingsForm : Form
             portLabel, portBox,
             passwordLabel, passwordBox,
             sourceLabel, sourceNameBox,
+            startupHeader,
+            autoStartCheckbox,
             statusLabel,
             saveButton,
             cancelButton,
@@ -209,10 +232,27 @@ public sealed class SettingsForm : Form
 
             await AppConfigStore.SaveAsync(existing).ConfigureAwait(true);
 
+            try
+            {
+                if (autoStartCheckbox.Checked)
+                {
+                    autoStart.Enable();
+                }
+                else
+                {
+                    autoStart.Disable();
+                }
+            }
+            catch (Exception ex)
+            {
+                statusLabel.ForeColor = Color.DarkOrange;
+                statusLabel.Text = $"Settings saved, but auto-start could not be updated: {ex.Message}";
+                return;
+            }
+
             statusLabel.ForeColor = Color.SeaGreen;
             statusLabel.Text = "Saved. Some changes (host/port/password) take effect after restart.";
 
-            // Close after a short delay so the user sees the confirmation.
             await Task.Delay(800).ConfigureAwait(true);
             DialogResult = DialogResult.OK;
             Close();

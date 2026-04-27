@@ -20,6 +20,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly ObsBrowserSourceUpdater obsUpdater;
     private readonly IDiscordSession session;
     private readonly IOptionsMonitor<ObsConnectionOptions> obsOptions;
+    private readonly AutoStartManager autoStart;
 
     private readonly NotifyIcon notifyIcon;
     private readonly System.Windows.Forms.Timer statusTimer;
@@ -32,7 +33,8 @@ public sealed class TrayApplicationContext : ApplicationContext
         IDiscordVoiceChannelWatcher watcher,
         ObsBrowserSourceUpdater obsUpdater,
         IDiscordSession session,
-        IOptionsMonitor<ObsConnectionOptions> obsOptions)
+        IOptionsMonitor<ObsConnectionOptions> obsOptions,
+        AutoStartManager autoStart)
     {
         this.logger = logger;
         this.lifetime = lifetime;
@@ -40,6 +42,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         this.obsUpdater = obsUpdater;
         this.session = session;
         this.obsOptions = obsOptions;
+        this.autoStart = autoStart;
 
         var menu = new ContextMenuStrip();
         channelStatusItem = new ToolStripMenuItem("Channel: starting…") { Enabled = false };
@@ -114,7 +117,7 @@ public sealed class TrayApplicationContext : ApplicationContext
 
     private void OnSettingsClicked(object? sender, EventArgs e)
     {
-        using var form = new SettingsForm(session, obsOptions.CurrentValue);
+        using var form = new SettingsForm(session, obsOptions.CurrentValue, autoStart);
         var result = form.ShowDialog();
         if (result == DialogResult.Abort)
         {

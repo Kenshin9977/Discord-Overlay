@@ -69,6 +69,7 @@ internal sealed class Program
         builder.Services.AddDiscordSession();
         builder.Services.AddObsBrowserSourceUpdater();
         builder.Services.AddSingleton<IUiDispatcher>(_ => new UiDispatcher(uiSyncContext));
+        builder.Services.AddSingleton<AutoStartManager>();
         builder.Services.AddHostedService<AppHostedService>();
         builder.Services.AddSingleton<TrayApplicationContext>();
 
