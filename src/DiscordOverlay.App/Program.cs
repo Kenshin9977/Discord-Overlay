@@ -1,7 +1,9 @@
 using DiscordOverlay.App.Hosting;
+using DiscordOverlay.Core;
 using DiscordOverlay.Core.Auth;
 using DiscordOverlay.Core.Discord;
 using DiscordOverlay.Core.Streaming;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -32,6 +34,18 @@ internal sealed class Program
         Directory.CreateDirectory(logsDirectory);
 
         var builder = Host.CreateApplicationBuilder(args);
+
+        // Layer the user's settings.json on top of the bundled appsettings.json.
+        // This is the file the Settings form writes; reloadOnChange propagates
+        // edits to anything reading IOptionsMonitor<T>.CurrentValue.
+        builder.Configuration.AddJsonFile(
+            AppConfigStore.DefaultFilePath,
+            optional: true,
+            reloadOnChange: true);
+
+        builder.Services.Configure<ObsConnectionOptions>(builder.Configuration.GetSection("Obs"));
+        builder.Services.Configure<DiscordVoiceChannelWatcherOptions>(builder.Configuration.GetSection("Watcher"));
+        builder.Services.Configure<StreamKitOverlayOptions>(builder.Configuration.GetSection("Streamkit"));
 
         builder.Services.AddSerilog((services, lc) => lc
             .ReadFrom.Services(services)

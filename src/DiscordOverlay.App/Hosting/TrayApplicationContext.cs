@@ -1,7 +1,10 @@
+using DiscordOverlay.App.Settings;
+using DiscordOverlay.Core.Auth;
 using DiscordOverlay.Core.Discord;
 using DiscordOverlay.Core.Streaming;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OBSStudioClient.Enums;
 
 namespace DiscordOverlay.App.Hosting;
@@ -15,6 +18,8 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly IHostApplicationLifetime lifetime;
     private readonly IDiscordVoiceChannelWatcher watcher;
     private readonly ObsBrowserSourceUpdater obsUpdater;
+    private readonly IDiscordSession session;
+    private readonly IOptionsMonitor<ObsConnectionOptions> obsOptions;
 
     private readonly NotifyIcon notifyIcon;
     private readonly System.Windows.Forms.Timer statusTimer;
@@ -25,12 +30,16 @@ public sealed class TrayApplicationContext : ApplicationContext
         ILogger<TrayApplicationContext> logger,
         IHostApplicationLifetime lifetime,
         IDiscordVoiceChannelWatcher watcher,
-        ObsBrowserSourceUpdater obsUpdater)
+        ObsBrowserSourceUpdater obsUpdater,
+        IDiscordSession session,
+        IOptionsMonitor<ObsConnectionOptions> obsOptions)
     {
         this.logger = logger;
         this.lifetime = lifetime;
         this.watcher = watcher;
         this.obsUpdater = obsUpdater;
+        this.session = session;
+        this.obsOptions = obsOptions;
 
         var menu = new ContextMenuStrip();
         channelStatusItem = new ToolStripMenuItem("Channel: starting…") { Enabled = false };
@@ -105,11 +114,14 @@ public sealed class TrayApplicationContext : ApplicationContext
 
     private void OnSettingsClicked(object? sender, EventArgs e)
     {
-        MessageBox.Show(
-            "Settings UI is coming in a later commit.\n\nFor now, edit appsettings.json next to the executable.",
-            "Discord-Overlay",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
+        using var form = new SettingsForm(session, obsOptions.CurrentValue);
+        var result = form.ShowDialog();
+        if (result == DialogResult.Abort)
+        {
+            // Sign-out happened; exit so user gets the wizard on next launch.
+            logger.LogInformation("Sign-out from settings — exiting application");
+            lifetime.StopApplication();
+        }
     }
 
     private void OnOpenLogFolderClicked(object? sender, EventArgs e)
