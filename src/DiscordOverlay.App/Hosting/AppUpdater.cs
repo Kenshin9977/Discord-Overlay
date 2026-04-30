@@ -7,7 +7,7 @@ namespace DiscordOverlay.App.Hosting;
 
 public sealed class AppUpdater
 {
-    private const string DefaultGitHubRepository = "https://github.com/kenshin993355/Discord-Overlay";
+    private const string DefaultGitHubRepository = "https://github.com/Kenshin9977/Discord-Overlay";
 
     private readonly UpdateManager? updateManager;
     private readonly ILogger<AppUpdater> logger;

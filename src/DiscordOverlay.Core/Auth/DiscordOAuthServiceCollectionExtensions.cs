@@ -11,7 +11,7 @@ public static class DiscordOAuthServiceCollectionExtensions
         services.AddHttpClient<IDiscordTokenExchange, DiscordTokenExchange>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(15);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Discord-Overlay (https://github.com/kenshin993355/Discord-Overlay)");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Discord-Overlay (https://github.com/Kenshin9977/Discord-Overlay)");
         });
         return services;
     }

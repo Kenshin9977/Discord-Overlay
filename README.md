@@ -26,7 +26,7 @@ No browser tabs, no OBS plugins, no manual edits.
 ## Install
 
 1. Download `Discord-Overlay-win-Setup.exe` from the
-   [Releases](https://github.com/kenshin993355/Discord-Overlay/releases) page.
+   [Releases](https://github.com/Kenshin9977/Discord-Overlay/releases) page.
 2. Run it. It installs to `%LocalAppData%\Discord-Overlay` (no admin needed)
    and launches into the system tray.
 3. The .NET 10 runtime is bundled — no separate install.
@@ -115,7 +115,7 @@ writes it; you can hand-edit if you like). Schema:
     "HideNames": false
   },
   "Update": {
-    "GitHubRepository": "https://github.com/kenshin993355/Discord-Overlay"
+    "GitHubRepository": "https://github.com/Kenshin9977/Discord-Overlay"
   }
 }
 ```
@@ -152,7 +152,7 @@ Prerequisites:
   CLI tool targets net9.0.
 
 ```powershell
-git clone https://github.com/kenshin993355/Discord-Overlay
+git clone https://github.com/Kenshin9977/Discord-Overlay
 cd Discord-Overlay
 dotnet build
 dotnet test
