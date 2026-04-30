@@ -278,6 +278,16 @@ public sealed class DiscordRpcClient : IDiscordRpcClient
         }
         finally
         {
+            // Clear the stream so IsConnected flips to false, which lets
+            // ConnectAsync be called again on a reconnect attempt.
+            lock (stateLock)
+            {
+                if (ReferenceEquals(stream, s))
+                {
+                    stream = null;
+                }
+            }
+
             FailPending(new DiscordRpcException("Discord IPC connection closed."));
             try
             {

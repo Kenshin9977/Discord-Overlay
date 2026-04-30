@@ -3,16 +3,20 @@ using Microsoft.Extensions.Logging;
 
 namespace DiscordOverlay.Core.Auth;
 
-public sealed class DiscordSession : IDiscordSession
+public sealed class DiscordSession : IDiscordSession, IDisposable
 {
     private static readonly IReadOnlyList<string> RequiredScopes = new[] { "rpc", "identify" };
     private static readonly TimeSpan TokenRefreshSkew = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan InitialReconnectDelay = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan MaxReconnectDelay = TimeSpan.FromSeconds(30);
 
     private readonly IDiscordRpcClient rpcClient;
     private readonly IDiscordTokenExchange tokenExchange;
     private readonly IDiscordCredentialStore credentialStore;
     private readonly ILogger<DiscordSession> logger;
     private readonly TimeProvider timeProvider;
+    private readonly SemaphoreSlim reconnectGate = new(1, 1);
+    private readonly CancellationTokenSource lifetime = new();
 
     public DiscordSession(
         IDiscordRpcClient rpcClient,
@@ -26,6 +30,8 @@ public sealed class DiscordSession : IDiscordSession
         this.credentialStore = credentialStore;
         this.logger = logger;
         this.timeProvider = timeProvider ?? TimeProvider.System;
+
+        rpcClient.Disconnected += OnRpcDisconnected;
     }
 
     public DiscordCredentialBundle? Current { get; private set; }
@@ -52,7 +58,6 @@ public sealed class DiscordSession : IDiscordSession
 
         await rpcClient.ConnectAsync(credentials.ClientId, cancellationToken).ConfigureAwait(false);
 
-        // Discord shows the consent popup inside its own client during AUTHORIZE.
         var code = await rpcClient.AuthorizeAsync(RequiredScopes, cancellationToken).ConfigureAwait(false);
 
         var token = await tokenExchange
@@ -87,6 +92,11 @@ public sealed class DiscordSession : IDiscordSession
 
         try
         {
+            if (rpcClient.IsConnected)
+            {
+                await rpcClient.DisconnectAsync(cancellationToken).ConfigureAwait(false);
+            }
+
             await rpcClient.ConnectAsync(bundle.ClientId, cancellationToken).ConfigureAwait(false);
 
             if (bundle.IsTokenExpired(TokenRefreshSkew, timeProvider.GetUtcNow()))
@@ -127,6 +137,9 @@ public sealed class DiscordSession : IDiscordSession
 
     public async Task SignOutAsync(CancellationToken cancellationToken = default)
     {
+        // Clear Current up-front so the reconnect handler bails fast and
+        // does not race against ClearAsync.
+        Current = null;
         try
         {
             if (rpcClient.IsConnected)
@@ -137,8 +150,84 @@ public sealed class DiscordSession : IDiscordSession
         finally
         {
             await credentialStore.ClearAsync(cancellationToken).ConfigureAwait(false);
-            Current = null;
             logger.LogInformation("Discord session signed out and credentials cleared.");
+        }
+    }
+
+    public void Dispose()
+    {
+        rpcClient.Disconnected -= OnRpcDisconnected;
+        try { lifetime.Cancel(); } catch { /* already disposed */ }
+        lifetime.Dispose();
+        reconnectGate.Dispose();
+    }
+
+    private async void OnRpcDisconnected(object? sender, EventArgs e)
+    {
+        // Only reconnect if the user actually has a session to restore.
+        // After SignOut Current is null and we exit immediately.
+        if (Current is null) return;
+        if (lifetime.IsCancellationRequested) return;
+
+        if (!await reconnectGate.WaitAsync(0).ConfigureAwait(false))
+        {
+            // A reconnect loop is already running.
+            return;
+        }
+
+        try
+        {
+            await ReconnectWithBackoffAsync(lifetime.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // app shutdown
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Discord IPC reconnect loop terminated unexpectedly");
+        }
+        finally
+        {
+            reconnectGate.Release();
+        }
+    }
+
+    private async Task ReconnectWithBackoffAsync(CancellationToken cancellationToken)
+    {
+        var delay = InitialReconnectDelay;
+        var attempt = 0;
+
+        while (!cancellationToken.IsCancellationRequested && Current is not null)
+        {
+            attempt++;
+            try
+            {
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            if (Current is null) return;
+
+            try
+            {
+                logger.LogInformation("Attempting Discord IPC reconnect (attempt {Attempt})…", attempt);
+                if (await ResumeFromStoreAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    logger.LogInformation("Discord IPC reconnected after {Attempts} attempt(s).", attempt);
+                    return;
+                }
+                logger.LogInformation("Discord IPC reconnect attempt {Attempt} did not succeed; will retry.", attempt);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogWarning(ex, "Discord IPC reconnect attempt {Attempt} threw", attempt);
+            }
+
+            delay = TimeSpan.FromTicks(Math.Min(MaxReconnectDelay.Ticks, delay.Ticks * 2));
         }
     }
 }
