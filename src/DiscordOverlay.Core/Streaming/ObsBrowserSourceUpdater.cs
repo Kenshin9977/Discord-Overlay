@@ -77,9 +77,23 @@ public sealed class ObsBrowserSourceUpdater : BackgroundService
         if (client.ConnectionState == ConnectionState.Connected)
         {
             logger.LogInformation("OBS WebSocket connected and authenticated.");
+
+            // Only push on connect if the watcher already knows the channel.
+            // If it's still null we'd be pushing about:blank to a Browser
+            // Source that may not even exist yet, and that initial timeout
+            // can leave OBSClient in a state where the next real push fails
+            // with "Not connected". Wait for the watcher's Changed event
+            // instead.
+            var snapshot = watcher.Current;
+            if (snapshot is null)
+            {
+                logger.LogDebug("OBS connected but voice channel state unknown; waiting for watcher.");
+                return;
+            }
+
             try
             {
-                await PushCurrentAsync().ConfigureAwait(false);
+                await PushAsync(snapshot).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -96,7 +110,7 @@ public sealed class ObsBrowserSourceUpdater : BackgroundService
     {
         try
         {
-            await PushCurrentAsync().ConfigureAwait(false);
+            await PushAsync(info).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -104,7 +118,7 @@ public sealed class ObsBrowserSourceUpdater : BackgroundService
         }
     }
 
-    private async Task PushCurrentAsync()
+    private async Task PushAsync(DiscordVoiceChannelInfo? info)
     {
         if (client.ConnectionState != ConnectionState.Connected)
         {
@@ -117,7 +131,7 @@ public sealed class ObsBrowserSourceUpdater : BackgroundService
             return;
         }
 
-        var url = urlBuilder.Build(watcher.Current) ?? BlankUrl;
+        var url = urlBuilder.Build(info) ?? BlankUrl;
 
         try
         {
@@ -134,8 +148,8 @@ public sealed class ObsBrowserSourceUpdater : BackgroundService
         {
             logger.LogWarning(ex,
                 "OBS SetInputSettings failed for source '{Source}'. " +
-                "Verify the Browser Source exists in OBS and the WebSocket server has permission.",
-                options.BrowserSourceName);
+                "Verify a Browser Source named exactly '{Source}' exists in your current OBS scene collection.",
+                options.BrowserSourceName, options.BrowserSourceName);
         }
     }
 }
