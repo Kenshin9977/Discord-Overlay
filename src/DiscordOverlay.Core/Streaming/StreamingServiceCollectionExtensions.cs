@@ -10,6 +10,7 @@ public static class StreamingServiceCollectionExtensions
         services.AddOptions<StreamKitOverlayOptions>();
         services.AddOptions<ObsConnectionOptions>();
         services.TryAddSingleton<StreamKitUrlBuilder>();
+        services.TryAddSingleton<ObsConnectionTester>();
         services.TryAddSingleton<ObsBrowserSourceUpdater>();
         services.AddHostedService(sp => sp.GetRequiredService<ObsBrowserSourceUpdater>());
         return services;
