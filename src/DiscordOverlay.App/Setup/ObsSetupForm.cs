@@ -1,3 +1,4 @@
+using DiscordOverlay.App.Resources;
 using DiscordOverlay.Core;
 using DiscordOverlay.Core.Streaming;
 
@@ -22,7 +23,7 @@ public sealed class ObsSetupForm : Form
     {
         this.tester = tester;
 
-        Text = "Discord-Overlay — Setup (step 2 of 2)";
+        Text = Strings.WizardObsWindowTitle;
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
@@ -42,7 +43,7 @@ public sealed class ObsSetupForm : Form
 
         var title = new Label
         {
-            Text = "Connect to OBS",
+            Text = Strings.WizardObsHeader,
             Font = new Font("Segoe UI Semibold", 14f, FontStyle.Bold),
             AutoSize = true,
             Location = new Point(20, 16),
@@ -53,15 +54,10 @@ public sealed class ObsSetupForm : Form
             AutoSize = false,
             Size = new Size(540, 110),
             Location = new Point(20, 50),
-            Text =
-                "Discord-Overlay drives an OBS Browser Source via the WebSocket server bundled with OBS 28+.\r\n\r\n" +
-                "1. In OBS: Tools → WebSocket Server Settings → tick \"Enable WebSocket server\".\r\n" +
-                "2. Click \"Show Connect Info\" in OBS to copy the Server Password — paste it below.\r\n" +
-                "3. In your scene, add a Browser Source named exactly the value below (default \"Discord-Overlay\").\r\n" +
-                "   Width/height as you like (e.g. 350×500). Leave the URL empty — this app fills it in.",
+            Text = Strings.WizardObsInstructions,
         };
 
-        var hostLabel = new Label { Text = "Host:", Location = new Point(20, 175), AutoSize = true };
+        var hostLabel = new Label { Text = Strings.WizardObsHostLabel, Location = new Point(20, 175), AutoSize = true };
         hostBox = new TextBox
         {
             Location = new Point(160, 172),
@@ -69,7 +65,7 @@ public sealed class ObsSetupForm : Form
             Text = current.Hostname,
         };
 
-        var portLabel = new Label { Text = "Port:", Location = new Point(20, 205), AutoSize = true };
+        var portLabel = new Label { Text = Strings.WizardObsPortLabel, Location = new Point(20, 205), AutoSize = true };
         portBox = new NumericUpDown
         {
             Location = new Point(160, 202),
@@ -79,7 +75,7 @@ public sealed class ObsSetupForm : Form
             Value = current.Port,
         };
 
-        var passwordLabel = new Label { Text = "Password:", Location = new Point(20, 235), AutoSize = true };
+        var passwordLabel = new Label { Text = Strings.WizardObsPasswordLabel, Location = new Point(20, 235), AutoSize = true };
         passwordBox = new TextBox
         {
             Location = new Point(160, 232),
@@ -88,7 +84,7 @@ public sealed class ObsSetupForm : Form
             Text = current.Password,
         };
 
-        var sourceLabel = new Label { Text = "Browser source name:", Location = new Point(20, 265), AutoSize = true };
+        var sourceLabel = new Label { Text = Strings.WizardObsBrowserSourceLabel, Location = new Point(20, 265), AutoSize = true };
         sourceNameBox = new TextBox
         {
             Location = new Point(160, 262),
@@ -98,7 +94,7 @@ public sealed class ObsSetupForm : Form
 
         testButton = new Button
         {
-            Text = "Test connection",
+            Text = Strings.WizardObsTestButton,
             Location = new Point(20, 310),
             AutoSize = true,
             Padding = new Padding(12, 4, 12, 4),
@@ -111,12 +107,12 @@ public sealed class ObsSetupForm : Form
             Size = new Size(540, 64),
             Location = new Point(20, 350),
             ForeColor = SystemColors.GrayText,
-            Text = "Click \"Test connection\" to verify your settings, then \"Save & finish\".",
+            Text = Strings.WizardObsInitialStatus,
         };
 
         skipButton = new Button
         {
-            Text = "Skip — configure later",
+            Text = Strings.WizardObsSkipButton,
             Location = new Point(20, 430),
             AutoSize = true,
             DialogResult = DialogResult.Ignore,
@@ -124,7 +120,7 @@ public sealed class ObsSetupForm : Form
 
         saveButton = new Button
         {
-            Text = "Save && finish",
+            Text = Strings.WizardObsSaveButton,
             Location = new Point(458, 430),
             AutoSize = true,
             Padding = new Padding(12, 4, 12, 4),
@@ -148,8 +144,6 @@ public sealed class ObsSetupForm : Form
             saveButton,
         });
 
-        // Allow Save & finish without an explicit test if the user already
-        // has matching settings (e.g. re-running setup).
         UpdateSaveEnabled();
         hostBox.TextChanged += (_, _) => InvalidateTest();
         portBox.ValueChanged += (_, _) => InvalidateTest();
@@ -161,7 +155,7 @@ public sealed class ObsSetupForm : Form
         tested = false;
         UpdateSaveEnabled();
         statusLabel.ForeColor = SystemColors.GrayText;
-        statusLabel.Text = "Settings changed — re-test the connection.";
+        statusLabel.Text = Strings.WizardObsRetestNeeded;
     }
 
     private void UpdateSaveEnabled()
@@ -177,12 +171,12 @@ public sealed class ObsSetupForm : Form
 
         if (string.IsNullOrWhiteSpace(host))
         {
-            SetStatus("Host is required.", error: true);
+            SetStatus(Strings.WizardObsHostRequired, error: true);
             return;
         }
 
         SetBusy(true);
-        SetStatus("Testing connection to OBS…", error: false);
+        SetStatus(Strings.WizardObsTesting, error: false);
 
         try
         {
@@ -190,12 +184,12 @@ public sealed class ObsSetupForm : Form
             if (result.IsSuccess)
             {
                 tested = true;
-                SetStatus("Connected — authentication accepted. Click \"Save & finish\" to continue.", error: false);
+                SetStatus(Strings.WizardObsTestSuccess, error: false);
             }
             else
             {
                 tested = false;
-                SetStatus(result.ErrorMessage ?? "Connection failed.", error: true);
+                SetStatus(result.ErrorMessage ?? Strings.WizardObsHostRequired, error: true);
             }
         }
         finally
@@ -222,7 +216,7 @@ public sealed class ObsSetupForm : Form
         }
         catch (Exception ex)
         {
-            SetStatus($"Save failed: {ex.Message}", error: true);
+            SetStatus(Strings.WizardObsSaveFailed(ex.Message), error: true);
         }
     }
 

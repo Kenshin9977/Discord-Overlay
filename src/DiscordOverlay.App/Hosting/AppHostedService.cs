@@ -1,3 +1,4 @@
+using DiscordOverlay.App.Resources;
 using DiscordOverlay.App.Setup;
 using DiscordOverlay.Core;
 using DiscordOverlay.Core.Auth;
@@ -94,8 +95,8 @@ public sealed class AppHostedService(
             await uiDispatcher.InvokeAsync(() =>
             {
                 MessageBox.Show(
-                    "Settings saved. Discord-Overlay will now restart so OBS settings take effect.",
-                    "Discord-Overlay",
+                    Strings.AppRestartMessage,
+                    Strings.AppName,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
                 Application.Restart();

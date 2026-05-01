@@ -1,4 +1,5 @@
 using DiscordOverlay.App.Hosting;
+using DiscordOverlay.App.Resources;
 using DiscordOverlay.Core;
 using DiscordOverlay.Core.Auth;
 using DiscordOverlay.Core.Streaming;
@@ -24,7 +25,7 @@ public sealed class SettingsForm : Form
         this.session = session;
         this.autoStart = autoStart;
 
-        Text = "Discord-Overlay — Settings";
+        Text = Strings.SettingsWindowTitle;
         StartPosition = FormStartPosition.CenterParent;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
@@ -42,10 +43,9 @@ public sealed class SettingsForm : Form
             // fall back to default
         }
 
-        // ----- Discord section -----
         var discordHeader = new Label
         {
-            Text = "Discord",
+            Text = Strings.SettingsDiscordHeader,
             Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold),
             AutoSize = true,
             Location = new Point(16, 12),
@@ -60,17 +60,16 @@ public sealed class SettingsForm : Form
 
         signOutButton = new Button
         {
-            Text = "Sign out and reset credentials",
+            Text = Strings.SettingsSignOutButton,
             Location = new Point(16, 80),
             AutoSize = true,
             Padding = new Padding(8, 4, 8, 4),
         };
         signOutButton.Click += async (_, _) => await OnSignOutAsync();
 
-        // ----- OBS section -----
         var obsHeader = new Label
         {
-            Text = "OBS WebSocket",
+            Text = Strings.SettingsObsHeader,
             Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold),
             AutoSize = true,
             Location = new Point(16, 130),
@@ -82,13 +81,13 @@ public sealed class SettingsForm : Form
             Size = new Size(430, 30),
             Location = new Point(16, 158),
             ForeColor = SystemColors.GrayText,
-            Text = "In OBS: Tools → WebSocket Server Settings → Enable. Add a Browser Source named below.",
+            Text = Strings.SettingsObsHint,
         };
 
-        var hostLabel = new Label { Text = "Host:", Location = new Point(16, 200), AutoSize = true };
+        var hostLabel = new Label { Text = Strings.SettingsHostLabel, Location = new Point(16, 200), AutoSize = true };
         hostBox = new TextBox { Location = new Point(140, 197), Size = new Size(300, 23), Text = currentObs.Hostname };
 
-        var portLabel = new Label { Text = "Port:", Location = new Point(16, 230), AutoSize = true };
+        var portLabel = new Label { Text = Strings.SettingsPortLabel, Location = new Point(16, 230), AutoSize = true };
         portBox = new NumericUpDown
         {
             Location = new Point(140, 227),
@@ -98,7 +97,7 @@ public sealed class SettingsForm : Form
             Value = currentObs.Port,
         };
 
-        var passwordLabel = new Label { Text = "Password:", Location = new Point(16, 260), AutoSize = true };
+        var passwordLabel = new Label { Text = Strings.SettingsPasswordLabel, Location = new Point(16, 260), AutoSize = true };
         passwordBox = new TextBox
         {
             Location = new Point(140, 257),
@@ -107,7 +106,7 @@ public sealed class SettingsForm : Form
             Text = currentObs.Password,
         };
 
-        var sourceLabel = new Label { Text = "Browser source:", Location = new Point(16, 290), AutoSize = true };
+        var sourceLabel = new Label { Text = Strings.SettingsBrowserSourceLabel, Location = new Point(16, 290), AutoSize = true };
         sourceNameBox = new TextBox
         {
             Location = new Point(140, 287),
@@ -115,10 +114,9 @@ public sealed class SettingsForm : Form
             Text = currentObs.BrowserSourceName,
         };
 
-        // ----- Startup section -----
         var startupHeader = new Label
         {
-            Text = "Startup",
+            Text = Strings.SettingsStartupHeader,
             Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold),
             AutoSize = true,
             Location = new Point(16, 326),
@@ -126,7 +124,7 @@ public sealed class SettingsForm : Form
 
         autoStartCheckbox = new CheckBox
         {
-            Text = "Start with Windows (silently in tray)",
+            Text = Strings.SettingsAutoStartCheckbox,
             Location = new Point(16, 354),
             AutoSize = true,
             Checked = autoStart.IsEnabled,
@@ -142,7 +140,7 @@ public sealed class SettingsForm : Form
 
         var saveButton = new Button
         {
-            Text = "Save",
+            Text = Strings.SettingsSaveButton,
             Location = new Point(268, 420),
             AutoSize = true,
             Padding = new Padding(12, 4, 12, 4),
@@ -152,7 +150,7 @@ public sealed class SettingsForm : Form
 
         var cancelButton = new Button
         {
-            Text = "Cancel",
+            Text = Strings.SettingsCancelButton,
             Location = new Point(368, 420),
             AutoSize = true,
             DialogResult = DialogResult.Cancel,
@@ -185,12 +183,12 @@ public sealed class SettingsForm : Form
     {
         if (session.Current is { ClientId: var clientId })
         {
-            discordStatus.Text = $"Signed in via your developer app (client {clientId}).";
+            discordStatus.Text = Strings.SettingsSignedIn(clientId);
             signOutButton.Enabled = true;
         }
         else
         {
-            discordStatus.Text = "Not signed in. Run the setup wizard to connect to Discord.";
+            discordStatus.Text = Strings.SettingsNotSignedIn;
             signOutButton.Enabled = false;
         }
     }
@@ -199,8 +197,8 @@ public sealed class SettingsForm : Form
     {
         var confirm = MessageBox.Show(
             this,
-            "Sign out and clear stored credentials? The app will exit; relaunch it to run setup again.",
-            "Sign out",
+            Strings.SettingsSignOutPrompt,
+            Strings.SettingsSignOutTitle,
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Question);
         if (confirm != DialogResult.Yes) return;
@@ -209,13 +207,13 @@ public sealed class SettingsForm : Form
         try
         {
             await session.SignOutAsync().ConfigureAwait(true);
-            DialogResult = DialogResult.Abort; // signals to caller "sign-out happened"
+            DialogResult = DialogResult.Abort;
             Close();
         }
         catch (Exception ex)
         {
             statusLabel.ForeColor = Color.Firebrick;
-            statusLabel.Text = $"Sign out failed: {ex.Message}";
+            statusLabel.Text = Strings.SettingsSignOutFailed(ex.Message);
             signOutButton.Enabled = true;
         }
     }
@@ -246,12 +244,12 @@ public sealed class SettingsForm : Form
             catch (Exception ex)
             {
                 statusLabel.ForeColor = Color.DarkOrange;
-                statusLabel.Text = $"Settings saved, but auto-start could not be updated: {ex.Message}";
+                statusLabel.Text = Strings.SettingsAutoStartFailed(ex.Message);
                 return;
             }
 
             statusLabel.ForeColor = Color.SeaGreen;
-            statusLabel.Text = "Saved. Some changes (host/port/password) take effect after restart.";
+            statusLabel.Text = Strings.SettingsSaveSuccess;
 
             await Task.Delay(800).ConfigureAwait(true);
             DialogResult = DialogResult.OK;
@@ -260,7 +258,7 @@ public sealed class SettingsForm : Form
         catch (Exception ex)
         {
             statusLabel.ForeColor = Color.Firebrick;
-            statusLabel.Text = $"Save failed: {ex.Message}";
+            statusLabel.Text = Strings.SettingsSaveFailed(ex.Message);
         }
     }
 }

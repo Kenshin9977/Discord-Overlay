@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using DiscordOverlay.App.Resources;
 using DiscordOverlay.Core.Auth;
 using DiscordOverlay.Core.Discord;
 
@@ -20,7 +21,7 @@ public sealed class SetupWizardForm : Form
     {
         this.session = session;
 
-        Text = "Discord-Overlay — Setup";
+        Text = Strings.WizardDiscordWindowTitle;
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
@@ -40,7 +41,7 @@ public sealed class SetupWizardForm : Form
 
         var title = new Label
         {
-            Text = "One-time Discord setup",
+            Text = Strings.WizardDiscordHeader,
             Font = new Font("Segoe UI Semibold", 14f, FontStyle.Bold),
             AutoSize = true,
             Location = new Point(20, 16),
@@ -51,21 +52,12 @@ public sealed class SetupWizardForm : Form
             AutoSize = false,
             Size = new Size(520, 180),
             Location = new Point(20, 50),
-            Text =
-                "Discord-Overlay needs its own Discord developer application. This is a one-time " +
-                "setup that takes about 30 seconds.\r\n\r\n" +
-                "1. Click \"Open Discord developer portal\" below.\r\n" +
-                "2. Click \"New Application\", name it (e.g. Discord-Overlay), and create it.\r\n" +
-                "3. In the new app, go to OAuth2 → Redirects and add this exact URL:\r\n" +
-                $"      {RedirectUri}\r\n" +
-                "4. Copy the Client ID (and reset/copy the Client Secret) into the fields below.\r\n" +
-                "5. Click \"Test & save\" — Discord will pop up a consent dialog inside the\r\n" +
-                "   Discord client; click Authorize to finish.",
+            Text = Strings.Format(nameof(Strings.WizardDiscordInstructions), RedirectUri),
         };
 
         var openPortalButton = new Button
         {
-            Text = "Open Discord developer portal",
+            Text = Strings.WizardDiscordOpenPortalButton,
             Location = new Point(20, 240),
             AutoSize = true,
             Padding = new Padding(8, 4, 8, 4),
@@ -74,7 +66,7 @@ public sealed class SetupWizardForm : Form
 
         var copyRedirectButton = new Button
         {
-            Text = "Copy redirect URI",
+            Text = Strings.WizardDiscordCopyRedirectButton,
             Location = new Point(220, 240),
             AutoSize = true,
             Padding = new Padding(8, 4, 8, 4),
@@ -83,12 +75,12 @@ public sealed class SetupWizardForm : Form
         {
             Clipboard.SetText(RedirectUri);
             statusLabel!.ForeColor = SystemColors.ControlText;
-            statusLabel.Text = $"Copied: {RedirectUri}";
+            statusLabel.Text = Strings.WizardDiscordRedirectCopied(RedirectUri);
         };
 
         var clientIdLabel = new Label
         {
-            Text = "Client ID:",
+            Text = Strings.WizardDiscordClientIdLabel,
             Location = new Point(20, 290),
             AutoSize = true,
         };
@@ -100,7 +92,7 @@ public sealed class SetupWizardForm : Form
 
         var clientSecretLabel = new Label
         {
-            Text = "Client Secret:",
+            Text = Strings.WizardDiscordClientSecretLabel,
             Location = new Point(20, 322),
             AutoSize = true,
         };
@@ -113,7 +105,7 @@ public sealed class SetupWizardForm : Form
 
         testButton = new Button
         {
-            Text = "Test && save",
+            Text = Strings.WizardDiscordTestSaveButton,
             Location = new Point(120, 360),
             AutoSize = true,
             Padding = new Padding(12, 4, 12, 4),
@@ -123,7 +115,7 @@ public sealed class SetupWizardForm : Form
 
         cancelButton = new Button
         {
-            Text = "Cancel",
+            Text = Strings.WizardDiscordCancelButton,
             Location = new Point(460, 360),
             AutoSize = true,
             DialogResult = DialogResult.Cancel,
@@ -176,12 +168,12 @@ public sealed class SetupWizardForm : Form
 
         if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
         {
-            SetStatus("Both Client ID and Client Secret are required.", error: true);
+            SetStatus(Strings.WizardDiscordFieldsRequired, error: true);
             return;
         }
 
         SetBusy(true);
-        SetStatus("Connecting to Discord… check the consent popup inside the Discord client.", error: false);
+        SetStatus(Strings.WizardDiscordConnecting, error: false);
 
         try
         {
@@ -192,21 +184,15 @@ public sealed class SetupWizardForm : Form
         }
         catch (DiscordRpcException ex)
         {
-            SetStatus(
-                $"Discord said no: {ex.Message}\r\n" +
-                "If you saw a consent popup, you may have denied it; if not, check that Discord is running.",
-                error: true);
+            SetStatus(Strings.WizardDiscordRpcError(ex.Message), error: true);
         }
         catch (DiscordOAuthException ex)
         {
-            SetStatus(
-                $"OAuth token exchange failed: {ex.Message}\r\n" +
-                "Verify the Client ID, Client Secret, and that the redirect URI is registered in the developer portal.",
-                error: true);
+            SetStatus(Strings.WizardDiscordOAuthError(ex.Message), error: true);
         }
         catch (Exception ex)
         {
-            SetStatus($"Setup failed: {ex.Message}", error: true);
+            SetStatus(Strings.WizardDiscordSetupFailed(ex.Message), error: true);
         }
         finally
         {

@@ -1,3 +1,4 @@
+using DiscordOverlay.App.Resources;
 using DiscordOverlay.App.Settings;
 using DiscordOverlay.Core.Auth;
 using DiscordOverlay.Core.Discord;
@@ -48,21 +49,21 @@ public sealed class TrayApplicationContext : ApplicationContext
         this.updater = updater;
 
         var menu = new ContextMenuStrip();
-        channelStatusItem = new ToolStripMenuItem("Channel: starting…") { Enabled = false };
-        obsStatusItem = new ToolStripMenuItem("OBS: starting…") { Enabled = false };
+        channelStatusItem = new ToolStripMenuItem(Strings.TrayChannelStarting) { Enabled = false };
+        obsStatusItem = new ToolStripMenuItem(Strings.TrayObsStarting) { Enabled = false };
         menu.Items.Add(channelStatusItem);
         menu.Items.Add(obsStatusItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Settings…", null, OnSettingsClicked);
-        menu.Items.Add("Check for updates", null, OnCheckForUpdatesClicked);
-        menu.Items.Add("Open log folder", null, OnOpenLogFolderClicked);
+        menu.Items.Add(Strings.TrayMenuSettings, null, OnSettingsClicked);
+        menu.Items.Add(Strings.TrayMenuCheckUpdates, null, OnCheckForUpdatesClicked);
+        menu.Items.Add(Strings.TrayMenuOpenLogFolder, null, OnOpenLogFolderClicked);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Quit", null, OnQuitClicked);
+        menu.Items.Add(Strings.TrayMenuQuit, null, OnQuitClicked);
 
         notifyIcon = new NotifyIcon
         {
             Icon = LoadApplicationIcon(),
-            Text = "Discord-Overlay — starting…",
+            Text = Strings.TrayInitialTooltip,
             Visible = true,
             ContextMenuStrip = menu,
         };
@@ -95,25 +96,25 @@ public sealed class TrayApplicationContext : ApplicationContext
 
         var channelText = channel switch
         {
-            null => "Not in voice",
+            null => Strings.TrayChannelNotInVoice,
             { Name: { Length: > 0 } name } => name,
-            _ => "(unknown channel)",
+            _ => Strings.TrayChannelUnknown,
         };
 
         var obsText = connectionState switch
         {
-            ConnectionState.Connected => "Connected",
-            ConnectionState.Connecting => "Connecting…",
-            ConnectionState.Disconnected => "Disconnected",
+            ConnectionState.Connected => Strings.TrayObsConnected,
+            ConnectionState.Connecting => Strings.TrayObsConnecting,
+            ConnectionState.Disconnected => Strings.TrayObsDisconnected,
             _ => connectionState.ToString(),
         };
 
-        channelStatusItem.Text = $"Channel: {channelText}";
-        obsStatusItem.Text = $"OBS: {obsText}";
+        channelStatusItem.Text = Strings.TrayChannelFormat(channelText);
+        obsStatusItem.Text = Strings.TrayObsFormat(obsText);
 
-        var tooltip = $"Discord-Overlay — {channelText} • OBS {obsText}";
+        var tooltip = Strings.TrayTooltipFormat(channelText, obsText);
         notifyIcon.Text = tooltip.Length > TooltipMaxLength
-            ? tooltip[..(TooltipMaxLength - 1)] + "…"
+            ? tooltip[..(TooltipMaxLength - 1)] + "..."
             : tooltip;
     }
 
@@ -126,7 +127,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         if (result == DialogResult.Abort)
         {
             // Sign-out happened; exit so user gets the wizard on next launch.
-            logger.LogInformation("Sign-out from settings — exiting application");
+            logger.LogInformation("Sign-out from settings; exiting application");
             lifetime.StopApplication();
         }
     }
@@ -157,29 +158,27 @@ public sealed class TrayApplicationContext : ApplicationContext
         if (!updater.IsInstalled)
         {
             MessageBox.Show(
-                "Updates are only available when Discord-Overlay is installed via Setup.exe (Velopack).\n\n" +
-                "You appear to be running an unpacked or developer build.",
-                "Discord-Overlay",
+                Strings.UpdatesNotInstalledMessage,
+                Strings.AppName,
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
             return;
         }
 
-        notifyIcon.ShowBalloonTip(2000, "Discord-Overlay", "Checking for updates…", ToolTipIcon.Info);
+        notifyIcon.ShowBalloonTip(2000, Strings.AppName, Strings.UpdatesCheckingBalloon, ToolTipIcon.Info);
         try
         {
             var update = await updater.CheckForUpdatesAsync().ConfigureAwait(true);
             if (update is null)
             {
-                notifyIcon.ShowBalloonTip(3000, "Discord-Overlay",
-                    $"You're up to date (v{updater.CurrentVersion ?? "?"}).", ToolTipIcon.Info);
+                notifyIcon.ShowBalloonTip(3000, Strings.AppName,
+                    Strings.UpdatesUpToDateBalloon(updater.CurrentVersion ?? "?"), ToolTipIcon.Info);
                 return;
             }
 
             var prompt = MessageBox.Show(
-                $"A new version is available: v{update.TargetFullRelease.Version}.\n\n" +
-                "Download and restart now?",
-                "Discord-Overlay update",
+                Strings.UpdatesAvailablePrompt(update.TargetFullRelease.Version.ToString()),
+                Strings.UpdatesAvailableTitle,
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question);
             if (prompt == DialogResult.Yes)
@@ -190,7 +189,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         catch (Exception ex)
         {
             logger.LogError(ex, "Update check from tray failed");
-            MessageBox.Show($"Update check failed: {ex.Message}", "Discord-Overlay",
+            MessageBox.Show(Strings.UpdatesCheckFailed(ex.Message), Strings.AppName,
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
@@ -203,7 +202,7 @@ public sealed class TrayApplicationContext : ApplicationContext
 
     private void OnHostStopping()
     {
-        logger.LogInformation("Host stopping — exiting Windows Forms message loop");
+        logger.LogInformation("Host stopping; exiting Windows Forms message loop");
         Application.Exit();
     }
 
