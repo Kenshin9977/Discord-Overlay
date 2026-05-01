@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & test (windows-latest)
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK (from global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore Discord-Overlay.slnx
+
+      - name: Build
+        run: dotnet build Discord-Overlay.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test Discord-Overlay.slnx --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/TestResults/*.trx'
+
+      - name: Scan for vulnerable NuGet packages
+        shell: pwsh
+        run: |
+          $output = dotnet list Discord-Overlay.slnx package --vulnerable --include-transitive 2>&1 | Out-String
+          Write-Output $output
+          if ($output -match 'has the following vulnerable packages') {
+            Write-Error "Vulnerable NuGet packages detected. Update them or pin to a non-affected version."
+            exit 1
+          }

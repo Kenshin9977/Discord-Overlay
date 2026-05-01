@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 0.2.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, pack with vpk, publish GitHub Release
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 10 SDK (from global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Setup .NET 9 SDK (vpk targets net9.0)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+            $version = '${{ github.event.inputs.version }}'
+          } else {
+            $version = '${{ github.ref_name }}'.TrimStart('v')
+          }
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Error 'Could not resolve version'
+            exit 1
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Output "Releasing version $version"
+
+      - name: Restore local tools (vpk)
+        run: dotnet tool restore
+
+      - name: Publish & pack
+        shell: pwsh
+        run: .\build\publish.ps1 -Pack -PackVersion ${{ steps.version.outputs.version }}
+
+      - name: Upload artifacts to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            Releases/Discord-Overlay-win-Setup.exe
+            Releases/Discord-Overlay-${{ steps.version.outputs.version }}-full.nupkg
+            Releases/Discord-Overlay-win-Portable.zip
+            Releases/RELEASES
+            Releases/releases.win.json
+            Releases/assets.win.json
