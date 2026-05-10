@@ -1,5 +1,5 @@
 using DiscordOverlay.App.Resources;
-using DiscordOverlay.App.Setup;
+using DiscordOverlay.App.Settings;
 using DiscordOverlay.Core;
 using DiscordOverlay.Core.Auth;
 using DiscordOverlay.Core.Streaming;
@@ -13,6 +13,7 @@ public sealed class AppHostedService(
     IDiscordSession session,
     ObsConnectionTester obsTester,
     IOptionsMonitor<ObsConnectionOptions> obsOptions,
+    AutoStartManager autoStart,
     IUiDispatcher uiDispatcher,
     IHostApplicationLifetime lifetime,
     ILogger<AppHostedService> logger) : BackgroundService
@@ -21,16 +22,15 @@ public sealed class AppHostedService(
     {
         try
         {
-            var resumed = await session.ResumeFromStoreAsync(stoppingToken).ConfigureAwait(false);
-            if (!resumed)
+            await session.ResumeFromStoreAsync(stoppingToken).ConfigureAwait(false);
+
+            if (NeedsFirstRunSetup())
             {
-                if (!await RunDiscordWizardAsync(stoppingToken).ConfigureAwait(false))
+                if (!await RunSetupDialogAsync(stoppingToken).ConfigureAwait(false))
                 {
                     return;
                 }
             }
-
-            await EnsureObsConfiguredAsync(stoppingToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -42,56 +42,39 @@ public sealed class AppHostedService(
         }
     }
 
-    private async Task<bool> RunDiscordWizardAsync(CancellationToken cancellationToken)
+    private bool NeedsFirstRunSetup()
     {
-        logger.LogInformation("Launching Discord setup wizard");
+        if (session.Current is null)
+        {
+            return true;
+        }
+
+        // settings.json missing or OBS WebSocket password unset means the
+        // user hasn't completed the OBS half of setup yet.
+        if (!File.Exists(AppConfigStore.DefaultFilePath))
+        {
+            return true;
+        }
+
+        var current = obsOptions.CurrentValue;
+        return string.IsNullOrEmpty(current.Password);
+    }
+
+    private async Task<bool> RunSetupDialogAsync(CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Launching first-run setup dialog");
 
         var result = await uiDispatcher.InvokeAsync(() =>
         {
-            using var wizard = new SetupWizardForm(session);
-            return wizard.ShowDialog();
+            using var form = new SettingsForm(session, obsOptions.CurrentValue, autoStart, obsTester);
+            return form.ShowDialog();
         }).ConfigureAwait(false);
 
         if (cancellationToken.IsCancellationRequested) return false;
 
         if (result == DialogResult.OK)
         {
-            logger.LogInformation("Discord setup completed");
-            return true;
-        }
-
-        logger.LogInformation("Discord setup cancelled — exiting application");
-        lifetime.StopApplication();
-        return false;
-    }
-
-    private async Task EnsureObsConfiguredAsync(CancellationToken cancellationToken)
-    {
-        // If the user has never run the OBS step (no settings.json), or
-        // OBS settings are clearly empty, walk them through it. Otherwise
-        // we let the existing values drive ObsBrowserSourceUpdater and
-        // assume any tweaks happen via the post-install Settings dialog.
-        var settingsExists = File.Exists(AppConfigStore.DefaultFilePath);
-        var current = obsOptions.CurrentValue;
-
-        if (settingsExists && !string.IsNullOrEmpty(current.Password))
-        {
-            return;
-        }
-
-        logger.LogInformation("Launching OBS setup wizard");
-
-        var result = await uiDispatcher.InvokeAsync(() =>
-        {
-            using var wizard = new ObsSetupForm(obsTester, current);
-            return wizard.ShowDialog();
-        }).ConfigureAwait(false);
-
-        if (cancellationToken.IsCancellationRequested) return;
-
-        if (result == DialogResult.OK)
-        {
-            logger.LogInformation("OBS setup completed; restarting to apply OBS WebSocket settings");
+            logger.LogInformation("First-run setup completed; restarting to apply OBS settings");
             await uiDispatcher.InvokeAsync(() =>
             {
                 MessageBox.Show(
@@ -101,11 +84,11 @@ public sealed class AppHostedService(
                     MessageBoxIcon.Information);
                 Application.Restart();
             }).ConfigureAwait(false);
+            return true;
         }
-        else
-        {
-            logger.LogInformation(
-                "OBS setup skipped — overlay updates will not be pushed until OBS is configured via Settings…");
-        }
+
+        logger.LogInformation("First-run setup cancelled — exiting application");
+        lifetime.StopApplication();
+        return false;
     }
 }

@@ -19,6 +19,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly IHostApplicationLifetime lifetime;
     private readonly IDiscordVoiceChannelWatcher watcher;
     private readonly ObsBrowserSourceUpdater obsUpdater;
+    private readonly ObsConnectionTester obsTester;
     private readonly IDiscordSession session;
     private readonly IOptionsMonitor<ObsConnectionOptions> obsOptions;
     private readonly AutoStartManager autoStart;
@@ -34,6 +35,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         IHostApplicationLifetime lifetime,
         IDiscordVoiceChannelWatcher watcher,
         ObsBrowserSourceUpdater obsUpdater,
+        ObsConnectionTester obsTester,
         IDiscordSession session,
         IOptionsMonitor<ObsConnectionOptions> obsOptions,
         AutoStartManager autoStart,
@@ -43,6 +45,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         this.lifetime = lifetime;
         this.watcher = watcher;
         this.obsUpdater = obsUpdater;
+        this.obsTester = obsTester;
         this.session = session;
         this.obsOptions = obsOptions;
         this.autoStart = autoStart;
@@ -122,7 +125,7 @@ public sealed class TrayApplicationContext : ApplicationContext
 
     private void OnSettingsClicked(object? sender, EventArgs e)
     {
-        using var form = new SettingsForm(session, obsOptions.CurrentValue, autoStart);
+        using var form = new SettingsForm(session, obsOptions.CurrentValue, autoStart, obsTester);
         var result = form.ShowDialog();
         if (result == DialogResult.Abort)
         {
