@@ -54,7 +54,11 @@ docker run -d --name certum-signer --restart unless-stopped \
   certum-signer
 ```
 
-### 2. Log in once (establishes the persistent session)
+### 2. Bootstrap login (one time only)
+
+This is the **only** manual login, ever — to bring the session up the
+first time. From then on the keepalive in section 4 refreshes it
+autonomously; you never connect to the VPS for a release.
 
 Tunnel the VNC port and connect a VNC client:
 
@@ -71,7 +75,10 @@ token is inert until you do. The p11‑kit socket now appears under
 
 ### 3. Restricted signing account + forced command
 
-Create `/opt/sign/sign-stdin.sh` (owned by the signing user, `chmod 755`):
+Create `/opt/sign/sign-stdin.sh` (owned by the signing user, `chmod 755`).
+It is **self-healing**: if signing fails because the SimplySign session
+lapsed, it triggers a re-login (section 4) and retries once, so a stale
+session never reaches CI.
 
 ```bash
 #!/usr/bin/env bash
@@ -80,14 +87,23 @@ export P11_KIT_SERVER_ADDRESS="unix:path=/run/user/1000/p11-kit/p11kit.sock"
 in=$(mktemp); out=$(mktemp)
 trap 'rm -f "$in" "$out"' EXIT
 cat > "$in"
-osslsigncode sign \
-  -pkcs11module /usr/lib/x86_64-linux-gnu/p11-kit-client.so \
-  -pkcs11cert 'pkcs11:model=SimplySign%20C' \
-  -key        'pkcs11:model=SimplySign%20C' \
-  -h sha256 -t http://time.certum.pl/ \
-  -n "Discord-Overlay" \
-  -i "https://github.com/Kenshin9977/Discord-Overlay" \
-  -in "$in" -out "$out" >&2
+
+do_sign() {
+  osslsigncode sign \
+    -pkcs11module /usr/lib/x86_64-linux-gnu/p11-kit-client.so \
+    -pkcs11cert 'pkcs11:model=SimplySign%20C' \
+    -key        'pkcs11:model=SimplySign%20C' \
+    -h sha256 -t http://time.certum.pl/ \
+    -n "Discord-Overlay" \
+    -i "https://github.com/Kenshin9977/Discord-Overlay" \
+    -in "$in" -out "$out" >&2
+}
+
+if ! do_sign; then
+  echo "sign-stdin: signing failed, forcing a SimplySign re-login…" >&2
+  sudo -n /usr/local/bin/certum-relogin   # scoped sudoers, see section 4
+  do_sign                                 # retry once; hard-fail if it
+fi                                        # still fails (fail-closed)
 cat "$out"
 ```
 
@@ -120,32 +136,111 @@ ssh -i ci_sign_key sign@your-vps < some.exe > some-signed.exe
 osslsigncode verify some-signed.exe   # or check the signature on Windows
 ```
 
-### 4. Keeping the session alive (the only recurring chore)
+### 4. Autonomous session keepalive (no manual step, ever)
 
-SimplySign cloud sessions expire (you pick the duration at login; Certum
-caps it). When the session lapses, signing fails and **CI goes red**
-(`sign-remote.sh` rejects non‑PE output) rather than shipping unsigned
-binaries. Options, least to most automated:
+SimplySign cloud sessions expire (you pick the duration at login;
+Certum caps it). To keep releases fully unattended, the VPS re-logs in
+by itself: a timer refreshes the session *before* it lapses, and
+`sign-stdin.sh` also forces a re-login on demand if a sign ever fails.
+You never touch the VPS for a release.
 
-- **Manual:** re-do step 2 over VNC when a release fails.
-- **Scripted re-login:** store the `otpauth://` TOTP secret in a
-  root‑only file **on the VPS**, and a `systemd` timer that runs
-  `oathtool --totp -b "$SECRET"` and types User ID + code into the
-  container's SimplySign window via `xdotool` (the container already
-  runs an X server). Schedule it just under the session lifetime. The
-  brittleness is now isolated to the VPS, off the build path, and
-  observable.
+**One-time: store the TOTP secret on the VPS.** Microsoft Authenticator
+won't reveal it after enrollment — re-enroll the SimplySign 2FA and
+save the base32 `secret=` from the `otpauth://totp/...?secret=...`
+string. It stays on the VPS only, never in CI:
 
-Whichever you pick, the TOTP secret stays on the VPS and never enters
-CI. To capture that secret: Microsoft Authenticator won't reveal it
-after enrollment — re-enroll the SimplySign 2FA and save the
-`otpauth://totp/...?secret=...` string shown during setup.
+```bash
+sudo install -m 700 -d /opt/sign/secret
+printf '%s' 'YOURBASE32SECRET' | sudo tee /opt/sign/secret/totp >/dev/null
+sudo chmod 600 /opt/sign/secret/totp
+echo -n 'YOUR_SIMPLYSIGN_USERID' | sudo tee /opt/sign/secret/userid >/dev/null
+```
+
+**The re-login script** `/usr/local/bin/certum-relogin` (`chmod 755`,
+root-owned) generates the current code with `oathtool` and drives the
+SimplySign Desktop window inside the container with `xdotool`, then
+verifies the token is back before returning success:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+export DISPLAY=:0   # the container's X server
+secret=$(cat /opt/sign/secret/totp)
+userid=$(cat /opt/sign/secret/userid)
+otp=$(oathtool --totp -b "$secret")
+
+# --- Brittle bit, isolated here: the SimplySign Desktop window layout.
+win=$(xdotool search --name 'SimplySign' | head -n1)
+xdotool windowactivate --sync "$win"
+xdotool type --delay 60 "$userid"; xdotool key Tab
+xdotool type --delay 60 "$otp";    xdotool key Return
+sleep 8
+# Some builds show a confirmation dialog that must be closed:
+xdotool search --name 'SimplySign' | while read -r w; do
+  xdotool windowactivate --sync "$w" key Return || true
+done
+
+# Verify: token must be listable, else fail loudly (no false "ok").
+for _ in $(seq 1 20); do
+  if P11_KIT_SERVER_ADDRESS=unix:path=/run/user/1000/p11-kit/p11kit.sock \
+       p11tool --list-tokens 2>/dev/null | grep -qi simplysign; then
+    echo "certum-relogin: session OK"; exit 0
+  fi
+  sleep 3
+done
+echo "certum-relogin: token still absent after re-login" >&2
+exit 1
+```
+
+> If running `xdotool`/`p11tool` against the container needs to happen
+> *inside* it, wrap the body in `docker exec certum-signer …`. Adjust
+> the window name / key sequence here if Certum changes the UI — this
+> is the one fragile spot, kept off the build path.
+
+**Timer** — refresh ahead of expiry (set the interval below your chosen
+session lifetime, e.g. 45 min for a 1 h session):
+
+```ini
+# /etc/systemd/system/certum-relogin.service
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/certum-relogin
+
+# /etc/systemd/system/certum-relogin.timer
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=45min
+Persistent=true
+[Install]
+WantedBy=timers.target
+```
+
+```bash
+sudo systemctl enable --now certum-relogin.timer
+```
+
+**Scoped sudoers** so the restricted signing user can trigger an
+on-demand re-login (and nothing else):
+
+```
+sign ALL=(root) NOPASSWD: /usr/local/bin/certum-relogin
+```
+
+Net result: the timer keeps the session warm; if it ever still lapses
+between ticks, the first sign of a release self-heals and retries; if
+even that fails, the release fails closed (never unsigned). No manual
+VPS step in the normal path.
 
 ## Failure modes
 
 - **No secrets:** unsigned release, CI green. By design.
-- **Session expired / login broken:** `sign-remote.sh` sees non‑PE or
-  too‑small output and fails the job. No silently-unsigned release.
+- **Session expired:** the keepalive timer normally prevents it; if it
+  still lapses, `sign-stdin.sh` self-heals (forces a re-login, retries
+  once) — release stays automated.
+- **Re-login itself broken** (Certum changed the UI, TOTP secret stale):
+  retry fails, `sign-remote.sh` sees non‑PE/too‑small output and fails
+  the job. Fail-closed: never a silently-unsigned release. Fix
+  `certum-relogin`, re-run.
 - **VPS unreachable:** SSH step fails the job; re-run after fixing.
 - **Cert reissued:** update the forced-command script if the
   `pkcs11:model` changes; update the thumbprint in this doc.
