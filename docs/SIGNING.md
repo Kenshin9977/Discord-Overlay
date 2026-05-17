@@ -1,57 +1,151 @@
 # Code signing
 
 Release binaries are signed with a **Certum "Open Source Developer"
-code-signing certificate** whose private key lives in Certum's
-**SimplySign cloud** (it is not exportable — there is no PFX). Signing
-runs entirely in the GitHub-hosted release workflow.
+code-signing certificate** (SHA‑1 thumbprint
+`80C0A61E3A5E10199070235AE95A9A0DB6971A94`, valid 2026‑05‑17 →
+2027‑05‑17). The private key is non‑exportable and lives in **Certum
+SimplySign cloud** — there is no PFX and no headless login API.
 
-Signing is **opt-in and non-breaking**: if the secrets below are not
-configured, `release.yml` still builds and publishes **unsigned**
-artifacts. Configure the secrets when you are ready and the next tagged
-release is signed automatically — no code change required.
+## Why this design
 
-## How it works
+Certum only unlocks the cloud key after an interactive TOTP login. Doing
+that inside CI means brittle GUI automation on every build. Instead, the
+**Linux VPS is a persistent signing host**:
 
-1. `release.yml` detects whether `CERTUM_OTP_URI` is set.
-2. If set: it installs SimplySign Desktop (winget), then
-   `build/Connect-SimplySign.ps1` generates the current TOTP from the
-   enrolled secret and drives the SimplySign Desktop login. SimplySign
-   mounts the cloud key as a virtual smart card, so the certificate
-   appears in `Cert:\CurrentUser\My`.
-3. `vpk pack --signParams` calls `signtool.exe` to sign the app exe,
-   `Update.exe`, and `Setup.exe`, selecting the cert by thumbprint
-   (`/sha1`) and timestamping via `http://time.certum.pl`.
+- SimplySign is logged in **once** on the VPS; the cloud session then
+  persists and is usable from automation without the GUI.
+- The VPS exposes signing through a **locked‑down SSH forced command**:
+  pipe a binary in, get a signed binary out — nothing else.
+- CI stays on GitHub‑hosted runners. For each binary, `vpk` calls
+  `build/sign-remote.sh`, which streams the file to the VPS and back.
+- The certificate, the TOTP secret, and the SimplySign session **never
+  touch CI**. The CI key can only ask the VPS to sign a blob.
 
-## Required GitHub Actions secrets
+Signing is **opt‑in and non‑breaking**: with no signing secrets,
+`release.yml` builds **unsigned** binaries exactly as before.
+
+## GitHub Actions secrets
 
 | Secret | Value |
 | --- | --- |
-| `CERTUM_OTP_URI` | The full `otpauth://totp/...?secret=...` URI of the SimplySign 2FA. **See the prerequisite below.** |
-| `CERTUM_USERID` | Your SimplySign / Certum cloud signing account user ID. |
-| `CERTUM_CERT_THUMBPRINT` | *(optional)* Signing-cert SHA‑1 thumbprint. Defaults to `80C0A61E3A5E10199070235AE95A9A0DB6971A94` (the current cert). Set this only if the cert is reissued. |
+| `SIGN_SSH_HOST` | `sign@your-vps` (the restricted signing account). |
+| `SIGN_SSH_KEY` | Private key authorised for that account (the CI half of the keypair below). |
+| `SIGN_SSH_PORT` | *(optional)* SSH port, default `22`. |
+| `SIGN_SSH_KNOWN_HOSTS` | *(recommended)* `known_hosts` line pinning the VPS host key. Without it the host key is trusted on first use. Get it with `ssh-keyscan -p <port> your-vps`. |
 
-## Prerequisite: capturing the TOTP secret
+## VPS setup (one time)
 
-The automation needs the raw TOTP **secret** (the `otpauth://` URI), not
-just 6-digit codes. **Microsoft Authenticator does not let you reveal a
-secret after enrollment.** To obtain it:
+### 1. Run the SimplySign signing container
 
-1. Sign in to your Certum / SimplySign account settings.
-2. Re-enroll the two-factor authenticator. During enrollment Certum
-   shows a QR code **and** a manual setup key / `otpauth://` URI.
-3. Save that `otpauth://totp/...?secret=...` string — that is the value
-   for the `CERTUM_OTP_URI` secret. (You can still scan the same QR with
-   Microsoft Authenticator for your own interactive use.)
-4. Store it as a GitHub Actions secret. Treat it like a password: it is
-   the second factor for your signing key.
+The key lives in SimplySign's cloud; on Linux it is reached through a
+p11‑kit socket published by SimplySign Desktop running headless. The
+maintained [`hpvb/certum-container`](https://github.com/hpvb/certum-container)
+packages exactly this.
 
-## Known fragility
+```bash
+# on the VPS
+git clone https://github.com/hpvb/certum-container
+cd certum-container
+docker build -t certum-signer .
+mkdir -p /opt/sign/p11
+docker run -d --name certum-signer --restart unless-stopped \
+  -p 127.0.0.1:5999:5999 \
+  -v /opt/sign/p11:/run/user/1000/p11-kit \
+  certum-signer
+```
 
-`Connect-SimplySign.ps1` drives the SimplySign Desktop window with
-`SendKeys` because Certum offers no headless login. The default key
-sequence assumes the login dialog focuses **User ID**, then `Tab` to the
-**OTP** field, then `Enter`. If Certum changes the window layout, adjust
-the SendKeys block in step 4 of that script. The script waits up to 90 s
-for the certificate to appear and fails the build with a clear message
-if login did not take, so a broken sequence fails fast rather than
-producing unsigned-but-green releases.
+### 2. Log in once (establishes the persistent session)
+
+Tunnel the VNC port and connect a VNC client:
+
+```bash
+ssh -L 5999:127.0.0.1:5999 your-vps
+# point a VNC client at localhost:5999
+```
+
+In the SimplySign Desktop window: enter your **User ID**, then the
+**OTP** from the SimplySign mobile app (Microsoft Authenticator works if
+you enrolled it). **Press the dialog's Close button after login** — the
+token is inert until you do. The p11‑kit socket now appears under
+`/opt/sign/p11/`.
+
+### 3. Restricted signing account + forced command
+
+Create `/opt/sign/sign-stdin.sh` (owned by the signing user, `chmod 755`):
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+export P11_KIT_SERVER_ADDRESS="unix:path=/run/user/1000/p11-kit/p11kit.sock"
+in=$(mktemp); out=$(mktemp)
+trap 'rm -f "$in" "$out"' EXIT
+cat > "$in"
+osslsigncode sign \
+  -pkcs11module /usr/lib/x86_64-linux-gnu/p11-kit-client.so \
+  -pkcs11cert 'pkcs11:model=SimplySign%20C' \
+  -key        'pkcs11:model=SimplySign%20C' \
+  -h sha256 -t http://time.certum.pl/ \
+  -n "Discord-Overlay" \
+  -i "https://github.com/Kenshin9977/Discord-Overlay" \
+  -in "$in" -out "$out" >&2
+cat "$out"
+```
+
+> The `pkcs11:model=...` string and the `p11-kit-client.so` path can
+> differ per token/distro. List what's actually exposed with
+> `P11_KIT_SERVER_ADDRESS=unix:path=/opt/sign/p11/p11kit.sock p11tool --list-tokens`
+> and adjust.
+
+Generate a CI keypair (no passphrase, it's used unattended):
+
+```bash
+ssh-keygen -t ed25519 -N '' -C 'ci@discord-overlay' -f ci_sign_key
+```
+
+Put the **private** key in the `SIGN_SSH_KEY` GitHub secret. On the VPS,
+add the **public** key to the signing user's `~/.ssh/authorized_keys`
+constrained to the forced command:
+
+```
+command="/opt/sign/sign-stdin.sh",restrict ssh-ed25519 AAAA...ci@discord-overlay
+```
+
+`restrict` removes pty/port/agent/X11 forwarding. This key can do
+nothing but produce a signed copy of whatever is piped in.
+
+Smoke test from your laptop:
+
+```bash
+ssh -i ci_sign_key sign@your-vps < some.exe > some-signed.exe
+osslsigncode verify some-signed.exe   # or check the signature on Windows
+```
+
+### 4. Keeping the session alive (the only recurring chore)
+
+SimplySign cloud sessions expire (you pick the duration at login; Certum
+caps it). When the session lapses, signing fails and **CI goes red**
+(`sign-remote.sh` rejects non‑PE output) rather than shipping unsigned
+binaries. Options, least to most automated:
+
+- **Manual:** re-do step 2 over VNC when a release fails.
+- **Scripted re-login:** store the `otpauth://` TOTP secret in a
+  root‑only file **on the VPS**, and a `systemd` timer that runs
+  `oathtool --totp -b "$SECRET"` and types User ID + code into the
+  container's SimplySign window via `xdotool` (the container already
+  runs an X server). Schedule it just under the session lifetime. The
+  brittleness is now isolated to the VPS, off the build path, and
+  observable.
+
+Whichever you pick, the TOTP secret stays on the VPS and never enters
+CI. To capture that secret: Microsoft Authenticator won't reveal it
+after enrollment — re-enroll the SimplySign 2FA and save the
+`otpauth://totp/...?secret=...` string shown during setup.
+
+## Failure modes
+
+- **No secrets:** unsigned release, CI green. By design.
+- **Session expired / login broken:** `sign-remote.sh` sees non‑PE or
+  too‑small output and fails the job. No silently-unsigned release.
+- **VPS unreachable:** SSH step fails the job; re-run after fixing.
+- **Cert reissued:** update the forced-command script if the
+  `pkcs11:model` changes; update the thumbprint in this doc.

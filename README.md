@@ -211,12 +211,13 @@ tests/
   DiscordOverlay.Core.Tests/      xUnit tests
 build/
   publish.ps1                     dotnet publish + vpk pack
-  Connect-SimplySign.ps1          Certum SimplySign CI login helper
+  sign-remote.sh                  per-file signer (delegates to the VPS)
 docs/
   SIGNING.md                      Code-signing setup (Certum SimplySign)
 ```
 
-Release binaries are code-signed via Certum SimplySign when the CI
+Release binaries are code-signed by delegating to a Certum SimplySign
+host (a Linux VPS) over a locked-down SSH forced command, when the CI
 secrets are configured; see [docs/SIGNING.md](docs/SIGNING.md). Releases
 stay green and unsigned until then.
 

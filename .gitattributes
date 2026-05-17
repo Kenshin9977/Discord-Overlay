@@ -1,0 +1,4 @@
+# Shell scripts must stay LF even when checked out on Windows (the
+# release workflow runs sign-remote.sh under Git-for-Windows bash, which
+# breaks on CRLF).
+*.sh text eol=lf

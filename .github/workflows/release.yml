@@ -17,12 +17,6 @@ jobs:
     name: Build, pack with vpk, publish GitHub Release
     runs-on: windows-latest
 
-    env:
-      # Public cert thumbprint (not a secret — it's in the public cert).
-      # Override with the CERTUM_CERT_THUMBPRINT secret if the cert is
-      # ever reissued.
-      CERT_THUMBPRINT: ${{ secrets.CERTUM_CERT_THUMBPRINT || '80C0A61E3A5E10199070235AE95A9A0DB6971A94' }}
-
     steps:
       - uses: actions/checkout@v6
         with:
@@ -54,56 +48,41 @@ jobs:
           "version=$version" >> $env:GITHUB_OUTPUT
           Write-Output "Releasing version $version"
 
-      - name: Determine code-signing availability
+      - name: Set up remote code-signing
         id: sign
         shell: pwsh
         env:
-          CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
+          SIGN_SSH_HOST: ${{ secrets.SIGN_SSH_HOST }}
+          SIGN_SSH_KEY: ${{ secrets.SIGN_SSH_KEY }}
+          SIGN_SSH_PORT: ${{ secrets.SIGN_SSH_PORT }}
+          SIGN_SSH_KNOWN_HOSTS: ${{ secrets.SIGN_SSH_KNOWN_HOSTS }}
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:CERTUM_OTP_URI)) {
-            Write-Warning 'Certum signing secrets not configured — producing UNSIGNED binaries.'
-            "enabled=false" >> $env:GITHUB_OUTPUT
-            "params=" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Output 'Certum signing secrets present — binaries will be signed.'
-            "enabled=true" >> $env:GITHUB_OUTPUT
-            "params=/fd sha256 /tr http://time.certum.pl /td sha256 /sha1 $env:CERT_THUMBPRINT" >> $env:GITHUB_OUTPUT
+          if ([string]::IsNullOrWhiteSpace($env:SIGN_SSH_HOST) -or
+              [string]::IsNullOrWhiteSpace($env:SIGN_SSH_KEY)) {
+            Write-Warning 'Remote-signing secrets not configured — producing UNSIGNED binaries.'
+            "template=" >> $env:GITHUB_OUTPUT
+            exit 0
           }
 
-      - name: Install SimplySign Desktop
-        if: steps.sign.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          winget install --id Certum.SmartSignSimplySignDesktop --silent `
-            --accept-package-agreements --accept-source-agreements --disable-interactivity
-          $exe = Get-ChildItem -Path `
-            "$env:ProgramFiles\Certum","${env:ProgramFiles(x86)}\Certum" `
-            -Recurse -Filter 'SimplySignDesktop.exe' -ErrorAction SilentlyContinue |
-            Select-Object -First 1 -ExpandProperty FullName
-          if (-not $exe) { throw 'SimplySignDesktop.exe not found after install.' }
-          "CERTUM_EXE_PATH=$exe" >> $env:GITHUB_ENV
-          Write-Output "SimplySign Desktop: $exe"
+          $keyPath = Join-Path $env:RUNNER_TEMP 'sign_key'
+          # Write LF-only and no trailing CRLF — OpenSSH rejects CRLF keys.
+          [IO.File]::WriteAllText($keyPath, ($env:SIGN_SSH_KEY -replace "`r`n", "`n"))
+          icacls $keyPath /inheritance:r | Out-Null
+          icacls $keyPath /grant:r "$($env:USERNAME):F" | Out-Null
 
-      - name: Ensure signtool.exe is on PATH
-        if: steps.sign.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          $signtool = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin" `
-            -Recurse -Filter 'signtool.exe' -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -match '\\x64\\' } |
-            Sort-Object FullName -Descending | Select-Object -First 1
-          if (-not $signtool) { throw 'signtool.exe not found in the Windows 10 SDK.' }
-          Split-Path $signtool.FullName >> $env:GITHUB_PATH
-          Write-Output "signtool: $($signtool.FullName)"
+          "SIGN_SSH_HOST=$($env:SIGN_SSH_HOST)"      >> $env:GITHUB_ENV
+          "SIGN_SSH_KEY_FILE=$keyPath"               >> $env:GITHUB_ENV
+          if (-not [string]::IsNullOrWhiteSpace($env:SIGN_SSH_PORT)) {
+            "SIGN_SSH_PORT=$($env:SIGN_SSH_PORT)"    >> $env:GITHUB_ENV
+          }
+          if (-not [string]::IsNullOrWhiteSpace($env:SIGN_SSH_KNOWN_HOSTS)) {
+            $khPath = Join-Path $env:RUNNER_TEMP 'sign_known_hosts'
+            [IO.File]::WriteAllText($khPath, ($env:SIGN_SSH_KNOWN_HOSTS -replace "`r`n", "`n"))
+            "SIGN_SSH_KNOWN_HOSTS=$khPath"           >> $env:GITHUB_ENV
+          }
 
-      - name: Log in to Certum SimplySign
-        if: steps.sign.outputs.enabled == 'true'
-        shell: pwsh
-        env:
-          CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
-          CERTUM_USERID: ${{ secrets.CERTUM_USERID }}
-          CERTUM_CERT_THUMBPRINT: ${{ env.CERT_THUMBPRINT }}
-        run: .\build\Connect-SimplySign.ps1
+          Write-Output 'Remote signing configured — binaries will be signed on the VPS.'
+          "template=bash ./build/sign-remote.sh ""{{file}}""" >> $env:GITHUB_OUTPUT
 
       - name: Restore local tools (vpk)
         run: dotnet tool restore
@@ -113,7 +92,7 @@ jobs:
         run: |
           .\build\publish.ps1 -Pack `
             -PackVersion ${{ steps.version.outputs.version }} `
-            -SignParams '${{ steps.sign.outputs.params }}'
+            -SignTemplate '${{ steps.sign.outputs.template }}'
 
       - name: Upload artifacts to GitHub Release
         uses: softprops/action-gh-release@v3

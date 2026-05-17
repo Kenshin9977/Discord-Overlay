@@ -30,7 +30,11 @@ param(
     # signtool.exe parameters used by vpk to sign the app exe, Update.exe
     # and Setup.exe. Empty = produce unsigned binaries (CI stays green
     # before code-signing secrets are configured).
-    [string] $SignParams = ''
+    [string] $SignParams = '',
+    # Custom per-file signing command for vpk ({{file}} is substituted).
+    # Used to delegate signing to the SimplySign host over SSH. Takes
+    # precedence over -SignParams. Empty = unsigned.
+    [string] $SignTemplate = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -110,12 +114,16 @@ if ($Pack) {
     if (Test-Path $icon) {
         $vpkArgs += @('--icon', $icon)
     }
-    if (-not [string]::IsNullOrWhiteSpace($SignParams)) {
+    if (-not [string]::IsNullOrWhiteSpace($SignTemplate)) {
+        Write-Host "Code signing enabled (vpk --signTemplate, delegated)" -ForegroundColor Cyan
+        $vpkArgs += @('--signTemplate', $SignTemplate)
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($SignParams)) {
         Write-Host "Code signing enabled (vpk --signParams)" -ForegroundColor Cyan
         $vpkArgs += @('--signParams', $SignParams)
     }
     else {
-        Write-Host "Code signing disabled (no -SignParams) — binaries will be unsigned" -ForegroundColor Yellow
+        Write-Host "Code signing disabled — binaries will be unsigned" -ForegroundColor Yellow
     }
 
     Write-Host "Packing with vpk -> $releasesDir" -ForegroundColor Cyan
