@@ -26,7 +26,11 @@ param(
     [string] $PackId = 'Discord-Overlay',
     [string] $Channel = 'win',
     [switch] $NoCompress,
-    [switch] $Pack
+    [switch] $Pack,
+    # signtool.exe parameters used by vpk to sign the app exe, Update.exe
+    # and Setup.exe. Empty = produce unsigned binaries (CI stays green
+    # before code-signing secrets are configured).
+    [string] $SignParams = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -105,6 +109,13 @@ if ($Pack) {
     )
     if (Test-Path $icon) {
         $vpkArgs += @('--icon', $icon)
+    }
+    if (-not [string]::IsNullOrWhiteSpace($SignParams)) {
+        Write-Host "Code signing enabled (vpk --signParams)" -ForegroundColor Cyan
+        $vpkArgs += @('--signParams', $SignParams)
+    }
+    else {
+        Write-Host "Code signing disabled (no -SignParams) — binaries will be unsigned" -ForegroundColor Yellow
     }
 
     Write-Host "Packing with vpk -> $releasesDir" -ForegroundColor Cyan

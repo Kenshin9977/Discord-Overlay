@@ -47,36 +47,46 @@ gets updated.
 
 ## First-run setup
 
-The app launches a one-time wizard with two steps (about 30 seconds total).
+On first launch the app opens the **Settings** dialog (the same one
+reachable later from the tray menu). It has three sections; do the
+Discord one first — the OBS section and **Save** stay disabled until
+Discord is connected.
 
-### Step 1: Discord developer app
+### Discord
 
 1. Click **Open Discord developer portal**.
 2. **New Application**, name it (e.g. `Discord-Overlay`), create.
-3. **OAuth2** then **Redirects**, add this exact URI (the wizard's
-   *Copy redirect URI* button copies it for you):
+3. **OAuth2** then **Redirects**, add this exact URI (the *Copy redirect
+   URI* button copies it for you):
    ```
    http://localhost:3000/callback
    ```
-4. Copy your **Client ID** and **Client Secret** into the wizard.
-5. Click **Test & save**. Discord pops up a consent dialog inside the
-   Discord client itself; click **Authorize**.
+4. Copy your **Client ID** and **Client Secret** into the fields.
+5. Click **Sign in**. Discord pops up a consent dialog inside the
+   Discord client itself; click **Authorize**. The Discord section
+   collapses to a status row with a **Sign out** button.
 
 Credentials are stored encrypted via Windows DPAPI scoped to your user
 account in `%LocalAppData%\DiscordOverlay\credentials.bin`.
 
-### Step 2: OBS connection
+### OBS connection
 
 1. Confirm host (`localhost`) and port (`4455`).
 2. Paste the OBS WebSocket password from the OBS preparation step.
 3. Confirm the Browser Source name matches what you created in OBS
    (default `Discord-Overlay`).
-4. Click **Test connection**. A green status means OBS accepted the password.
-5. Click **Save & finish**. The app restarts automatically to apply OBS
-   settings.
+4. Optionally click **Test connection** — a green status means OBS
+   accepted the password.
 
-The wizard only runs the first time, or whenever OBS settings are missing
-from `settings.json`.
+### Startup
+
+Tick **Start with Windows** if you want the app to launch silently into
+the tray at boot, then click **Save**. The app restarts once to apply
+the OBS settings.
+
+The dialog opens automatically until both Discord is connected and OBS
+settings exist in `settings.json`; after that the app starts silently
+and you reach the same dialog from the tray's **Settings…** entry.
 
 ## Tray menu
 
@@ -190,8 +200,7 @@ src/
   DiscordOverlay.App/             WinForms tray app (entry, UI, hosting)
     Hosting/                      Generic Host glue, tray, dispatcher,
                                   AutoStartManager, AppUpdater
-    Setup/                        Two-step setup wizard (Discord, OBS)
-    Settings/                     Settings dialog
+    Settings/                     Unified Settings / first-run dialog
   DiscordOverlay.Core/            UI-free library
     Auth/                         OAuth flow, DPAPI store, DiscordSession
                                   (with IPC auto-reconnect)
@@ -202,7 +211,14 @@ tests/
   DiscordOverlay.Core.Tests/      xUnit tests
 build/
   publish.ps1                     dotnet publish + vpk pack
+  Connect-SimplySign.ps1          Certum SimplySign CI login helper
+docs/
+  SIGNING.md                      Code-signing setup (Certum SimplySign)
 ```
+
+Release binaries are code-signed via Certum SimplySign when the CI
+secrets are configured; see [docs/SIGNING.md](docs/SIGNING.md). Releases
+stay green and unsigned until then.
 
 ## Tech stack
 
