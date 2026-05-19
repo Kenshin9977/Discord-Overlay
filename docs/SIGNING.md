@@ -72,9 +72,11 @@ README explicitly says never to trust prebuilt images.
 cd ~/certum-container && docker build -t certum-base .
 
 # derived image: adds xdotool + oathtool + relogin-internal.sh
-#   (copy build/vps/Dockerfile and build/vps/relogin-internal.sh
-#    from this repo into ~/certum-auto/)
-cd ~/certum-auto && docker build -t certum-auto .
+mkdir -p ~/certum-auto && cd ~/certum-auto
+curl -fsSL -O https://raw.githubusercontent.com/Kenshin9977/Discord-Overlay/master/build/vps/Dockerfile
+curl -fsSL -O https://raw.githubusercontent.com/Kenshin9977/Discord-Overlay/master/build/vps/relogin-internal.sh
+chmod +x relogin-internal.sh
+docker build -t certum-auto .
 
 VNCPW=$(openssl rand -base64 12)
 echo "VNC password (needed for the one-time bootstrap login): $VNCPW"
