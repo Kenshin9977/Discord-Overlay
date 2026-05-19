@@ -20,7 +20,10 @@ if [[ "$secret" == REPLACE_* || "$userid" == REPLACE_* ]]; then
   echo "relogin-internal: /opt/sign/secret not populated yet" >&2
   exit 1
 fi
-otp=$(oathtool --totp -b "$secret")
+# Certum SimplySign issues TOTP with algorithm=SHA256 (see the otpauth
+# URI shown at enrollment). oathtool defaults to SHA1, which silently
+# produces wrong codes here.
+otp=$(oathtool --totp=sha256 -b "$secret")
 
 # Wait for the SimplySign window to exist.
 win=""
