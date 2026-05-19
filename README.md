@@ -212,6 +212,8 @@ tests/
 build/
   publish.ps1                     dotnet publish + vpk pack
   sign-remote.sh                  per-file signer (delegates to the VPS)
+  vps/                            signing-host container (Dockerfile,
+                                  relogin-internal.sh)
 docs/
   SIGNING.md                      Code-signing setup (Certum SimplySign)
 ```
