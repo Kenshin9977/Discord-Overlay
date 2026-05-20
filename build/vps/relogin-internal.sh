@@ -20,11 +20,12 @@ if [[ "$secret" == REPLACE_* || "$userid" == REPLACE_* ]]; then
   echo "relogin-internal: /opt/sign/secret not populated yet" >&2
   exit 1
 fi
-# Certum SimplySign's otpauth URI says algorithm=SHA256, but in
-# practice Certum accepts the SHA1 codes that Microsoft Authenticator
-# generates (MS Auth ignores the algorithm parameter). Stick with SHA1
-# — the codes have to match what the SimplySign server actually checks.
-otp=$(oathtool --totp -b "$secret")
+# Certum SimplySign's otpauth URI specifies algorithm=SHA256 and the
+# server only accepts SHA256 codes. Microsoft Authenticator silently
+# ignores the algorithm parameter and shows SHA1 codes — those are
+# rejected by SimplySign. Use SHA256 to match what the Certum mobile
+# app (and the server) actually compute.
+otp=$(oathtool --totp=sha256 -b "$secret")
 
 # Wait for the SimplySign window to exist.
 win=""
