@@ -4,7 +4,7 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="coverlet.collector" Version="10.0.0" />
+    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.7" />
