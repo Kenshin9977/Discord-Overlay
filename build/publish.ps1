@@ -60,6 +60,13 @@ if (-not (Test-Path $dotnet)) {
 $env:DOTNET_ROOT = Split-Path -Parent $dotnet
 
 # ---------- Stage 1: publish ----------
+# Stamp the binary with the version being released, so the exe's file properties
+# agree with the package. Without this they sit at whatever Directory.Build.props
+# happens to say and silently drift behind every tag.
+# AssemblyVersion/FileVersion must be plain numeric, so drop any -prerelease part.
+$numericVersion = ($PackVersion -split '[-+]')[0]
+while (($numericVersion -split '\.').Count -lt 4) { $numericVersion += '.0' }
+
 $publishArgs = @(
     'publish', $proj,
     '-c', $Configuration,
@@ -69,6 +76,9 @@ $publishArgs = @(
     '-p:IncludeNativeLibrariesForSelfExtract=true',
     '-p:PublishReadyToRun=true',
     '-p:DebugType=embedded',
+    "-p:Version=$PackVersion",
+    "-p:AssemblyVersion=$numericVersion",
+    "-p:FileVersion=$numericVersion",
     '-o', $publishDir
 )
 if (-not $NoCompress) {

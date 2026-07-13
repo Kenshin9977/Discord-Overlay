@@ -15,9 +15,12 @@
     <Copyright>Copyright (c) Kenshin</Copyright>
     <RepositoryUrl>https://github.com/Kenshin9977/Discord-Overlay</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>2.0.1</Version>
-    <AssemblyVersion>2.0.1.0</AssemblyVersion>
-    <FileVersion>2.0.1.0</FileVersion>
+    <!-- Fallback for local/dev builds. A release overrides these from the tag
+         (publish.ps1 -PackVersion), so the binary's file properties match the
+         version actually shipped instead of drifting behind it. -->
+    <Version>2.0.2</Version>
+    <AssemblyVersion>2.0.2.0</AssemblyVersion>
+    <FileVersion>2.0.2.0</FileVersion>
   </PropertyGroup>
 
 </Project>
