@@ -72,12 +72,12 @@ fixed = """    if cert_end < pe.len() {
         h.update(&pe[cert_end..]);
     }
     // An unsigned file is zero-padded to an 8-byte boundary by embed() before the
-    // certificate table is appended. That padding lands INSIDE the hashed region,
-    // so it has to be hashed here too — otherwise every PE whose length is not
+    // certificate table is appended, and that padding falls inside the region
+    // Windows hashes. It must be hashed here too, or every PE whose length is not
     // already a multiple of 8 gets a digest Windows disagrees with.
     if l.cert_table_size == 0 {
         let pad = (8 - (pe.len() % 8)) % 8;
-        h.update(&vec![0u8; pad]);
+        h.update(&[0u8; 8][..pad]);
     }
     Ok(h.finalize().into())
 }"""
