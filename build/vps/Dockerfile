@@ -8,7 +8,11 @@
 # a TOTP generator and a way to drive the SimplySign window headlessly.
 FROM certum-base
 
-RUN dnf -y install --setopt=install_weak_deps=False xdotool oathtool \
+# xdotool + oathtool drive the unattended re-login. ImageMagick's `import`
+# is the only way to SEE the headless X display: the login sequence has to
+# be calibrated against a GUI nobody can watch, and a screenshot beats
+# guessing at keystrokes. Keep it — it is how this gets debugged.
+RUN dnf -y install --setopt=install_weak_deps=False xdotool oathtool ImageMagick \
  && dnf clean all
 
 COPY relogin-internal.sh /usr/local/bin/relogin-internal.sh
