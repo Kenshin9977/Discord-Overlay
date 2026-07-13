@@ -65,10 +65,26 @@ jobs:
           }
 
           $keyPath = Join-Path $env:RUNNER_TEMP 'sign_key'
-          # Write LF-only and no trailing CRLF — OpenSSH rejects CRLF keys.
-          [IO.File]::WriteAllText($keyPath, ($env:SIGN_SSH_KEY -replace "`r`n", "`n"))
+          # LF-only, and exactly one trailing newline. OpenSSH rejects CRLF keys,
+          # and it also refuses a key whose final line is unterminated — which is
+          # what you get from pasting a key into the GitHub secrets box, since the
+          # form strips the trailing newline. The symptom is misleading:
+          #   Load key "...": error in libcrypto: unsupported
+          #   Permission denied (publickey)
+          # which reads like a rejected key rather than an unparseable file.
+          $key = ($env:SIGN_SSH_KEY -replace "`r`n", "`n").TrimEnd("`n") + "`n"
+          [IO.File]::WriteAllText($keyPath, $key)
           icacls $keyPath /inheritance:r | Out-Null
           icacls $keyPath /grant:r "$($env:USERNAME):F" | Out-Null
+
+          # Fail here, loudly, if the key does not parse — rather than 200 lines
+          # later inside vpk as an opaque signing failure.
+          ssh-keygen -y -f $keyPath | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "SIGN_SSH_KEY is not a usable OpenSSH private key (see above). Re-add the secret, including the BEGIN/END lines."
+            exit 1
+          }
+          Write-Output 'Signing key parsed OK.'
 
           "SIGN_SSH_HOST=$($env:SIGN_SSH_HOST)"      >> $env:GITHUB_ENV
           "SIGN_SSH_KEY_FILE=$keyPath"               >> $env:GITHUB_ENV
