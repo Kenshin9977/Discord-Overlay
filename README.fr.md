@@ -30,8 +30,8 @@ Pas d'onglet de navigateur, pas de plugin OBS, aucune édition manuelle.
 
 ## Installation
 
-1. Téléchargez `Discord-Overlay-win-Setup.exe` depuis la page
-   [Releases](https://github.com/Kenshin9977/Discord-Overlay/releases).
+1. Téléchargez `Discord-Overlay-win-Setup.exe` depuis la
+   [dernière release](https://github.com/Kenshin9977/Discord-Overlay/releases/latest).
 2. Lancez-le. Il s'installe dans `%LocalAppData%\Discord-Overlay` (aucun droit
    administrateur requis) et démarre dans la barre d'état.
 3. Le runtime .NET 10 est embarqué, rien d'autre à installer.
