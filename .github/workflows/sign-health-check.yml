@@ -1,12 +1,17 @@
-name: sign-windows self-test
+name: sign-windows health check
 
-# Temporary. Exercises the composite action exactly the way another repository
-# consumes it — by its cross-repo ref, not a local path — because that is the one
-# link the release pipeline never covers: whether the action resolves the shared
-# signer from its own checkout.
+# Run this by hand to answer "is the signing host actually working?" without
+# cutting a release. Not having it is why a broken signer was only discovered
+# by publishing a broken installer.
 #
-# Deliberately signs a PE whose length is NOT a multiple of 8: that is the case
-# that silently produced a HashMismatch signature and shipped a broken installer.
+# It exercises the composite action the way an external repository consumes it —
+# by its cross-repo ref, not a local path — so it also covers the one link the
+# release pipeline never touches: whether the action resolves the shared signer
+# from its own checkout.
+#
+# The probe is deliberately a PE whose length is NOT a multiple of 8. That is the
+# case that silently produced HashMismatch signatures; an 8-aligned test file
+# passes even when the signer is broken.
 
 on:
   workflow_dispatch:
