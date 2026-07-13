@@ -12,8 +12,15 @@ RUN dnf -y install --setopt=install_weak_deps=False xdotool oathtool \
  && dnf clean all
 
 COPY relogin-internal.sh /usr/local/bin/relogin-internal.sh
-RUN chmod 0755 /usr/local/bin/relogin-internal.sh
+COPY entrypoint-wrapper.sh /usr/local/bin/entrypoint-wrapper.sh
+RUN chmod 0755 /usr/local/bin/relogin-internal.sh \
+                /usr/local/bin/entrypoint-wrapper.sh
 
-# ENTRYPOINT is inherited from certum-base (starts Xvnc + SimplySign).
+# The wrapper clears monit's stale PID-1 pidfile, then hands over to the
+# base image's entrypoint (Xvnc + SimplySign). Without it the container
+# starts exactly once and crash-loops forever after any restart — see the
+# comment in entrypoint-wrapper.sh.
+ENTRYPOINT ["/usr/local/bin/entrypoint-wrapper.sh"]
+
 # relogin-internal.sh is invoked on demand via `docker exec` by the
 # host's /usr/local/bin/certum-relogin.
