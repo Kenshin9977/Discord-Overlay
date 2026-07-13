@@ -55,8 +55,15 @@ public sealed class SettingsForm : Form
         MaximizeBox = false;
         MinimizeBox = false;
         ShowInTaskbar = true;
-        ClientSize = new Size(580, 760);
         Font = new Font("Segoe UI", 9f);
+        AutoScaleMode = AutoScaleMode.Font;
+
+        // The Discord group swaps a tall sign-in wizard for a short "connected"
+        // summary. Sizing the dialog to whichever one is showing — rather than
+        // always reserving room for the taller — is what keeps the connected
+        // view from being mostly empty space, and it re-runs on sign-in.
+        AutoSize = true;
+        AutoSizeMode = AutoSizeMode.GrowAndShrink;
 
         try
         {
@@ -70,15 +77,34 @@ public sealed class SettingsForm : Form
         discordGroup = new GroupBox
         {
             Text = Strings.SettingsDiscordHeader,
-            Location = new Point(16, 8),
-            Size = new Size(548, 380),
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Padding = new Padding(8, 6, 8, 8),
         };
+
+        // Exactly one of these two panels is visible at a time. An AutoSize
+        // row collapses to nothing when its control is hidden, so the group
+        // shrinks to the state on screen rather than to the larger of the two.
+        var discordBody = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
+        };
+        discordBody.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        discordBody.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        discordBody.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         // Signed-out sub-panel: portal/copy buttons, client id/secret, sign-in.
         signedOutPanel = new Panel
         {
-            Location = new Point(8, 20),
-            Size = new Size(532, 352),
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Margin = Padding.Empty,
             Visible = false,
         };
 
@@ -169,8 +195,9 @@ public sealed class SettingsForm : Form
         // Signed-in sub-panel: status + sign-out.
         signedInPanel = new Panel
         {
-            Location = new Point(8, 20),
-            Size = new Size(532, 352),
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Margin = Padding.Empty,
             Visible = false,
         };
 
@@ -190,12 +217,14 @@ public sealed class SettingsForm : Form
         signOutButton.Click += async (_, _) => await OnSignOutAsync().ConfigureAwait(true);
 
         signedInPanel.Controls.AddRange(new Control[] { signedInStatus, signOutButton });
-        discordGroup.Controls.AddRange(new Control[] { signedOutPanel, signedInPanel });
+        discordBody.Controls.Add(signedOutPanel, 0, 0);
+        discordBody.Controls.Add(signedInPanel, 0, 1);
+        discordGroup.Controls.Add(discordBody);
 
         var obsGroup = new GroupBox
         {
             Text = Strings.SettingsObsHeader,
-            Location = new Point(16, 396),
+            Dock = DockStyle.Fill,
             Size = new Size(548, 230),
         };
 
@@ -268,7 +297,7 @@ public sealed class SettingsForm : Form
         var startupGroup = new GroupBox
         {
             Text = Strings.SettingsStartupHeader,
-            Location = new Point(16, 634),
+            Dock = DockStyle.Fill,
             Size = new Size(548, 60),
         };
         autoStartCheckbox = new CheckBox
@@ -283,15 +312,16 @@ public sealed class SettingsForm : Form
         statusLabel = new Label
         {
             AutoSize = false,
-            Size = new Size(548, 22),
-            Location = new Point(16, 700),
+            Anchor = AnchorStyles.Left | AnchorStyles.Right,
+            Height = 22,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(3, 6, 3, 0),
             ForeColor = SystemColors.GrayText,
         };
 
         saveButton = new Button
         {
             Text = Strings.SettingsSaveButton,
-            Location = new Point(388, 724),
             AutoSize = true,
             Padding = new Padding(12, 4, 12, 4),
         };
@@ -300,22 +330,49 @@ public sealed class SettingsForm : Form
         var cancelButton = new Button
         {
             Text = Strings.SettingsCancelButton,
-            Location = new Point(488, 724),
             AutoSize = true,
+            Padding = new Padding(12, 4, 12, 4),
             DialogResult = DialogResult.Cancel,
         };
         AcceptButton = saveButton;
         CancelButton = cancelButton;
 
-        Controls.AddRange(new Control[]
+        // Right-to-left flow puts Cancel on the right edge and Save to its left.
+        // Anchored rather than docked: an AutoSize row cannot measure a docked
+        // child, and would give the row too little height to show the buttons.
+        var buttonRow = new FlowLayoutPanel
         {
-            discordGroup,
-            obsGroup,
-            startupGroup,
-            statusLabel,
-            saveButton,
-            cancelButton,
-        });
+            Anchor = AnchorStyles.Right,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            FlowDirection = FlowDirection.RightToLeft,
+            Margin = new Padding(0, 8, 0, 0),
+        };
+        buttonRow.Controls.Add(cancelButton);
+        buttonRow.Controls.Add(saveButton);
+
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 1,
+            RowCount = 5,
+            Padding = new Padding(12, 8, 12, 12),
+        };
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        for (var row = 0; row < root.RowCount; row++)
+        {
+            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        }
+
+        root.Controls.Add(discordGroup, 0, 0);
+        root.Controls.Add(obsGroup, 0, 1);
+        root.Controls.Add(startupGroup, 0, 2);
+        root.Controls.Add(statusLabel, 0, 3);
+        root.Controls.Add(buttonRow, 0, 4);
+
+        Controls.Add(root);
 
         ApplyDiscordState();
     }
