@@ -32,6 +32,30 @@ No browser tabs, no OBS plugins, no manual edits.
    and launches into the system tray.
 3. The .NET 10 runtime is bundled, no separate install.
 
+### "Windows protected your PC" — expected, and here's why
+
+Windows will very likely show a blue **SmartScreen** warning the first time you
+run the installer. **This is normal for a new release and does not mean the app
+is unsafe.** Click **More info** then **Run anyway**.
+
+Here is what is actually going on, so you can judge for yourself:
+
+- The installer **is** code-signed, with a Certum "Open Source Developer"
+  certificate. Windows shows a real publisher name —
+  **`Open Source Developer Rogelio MENDOZA`** — instead of *Unknown publisher*.
+  You can check for yourself: right-click the `.exe` → **Properties** →
+  **Digital Signatures**.
+- SmartScreen does not warn because a file is unsigned. It warns because a file
+  is **not yet well known**. Reputation is earned by download volume over time,
+  and a freshly-signed release starts at zero. There is no way to request or buy
+  an exemption — not even with a more expensive certificate.
+- So the warning fades on its own as more people install it, and every release
+  before it earned reputation will show it.
+
+If the signature ever shows as *invalid* or the publisher name is anything other
+than the one above, do **not** run the file — that would mean it was tampered
+with, and it did not come from here.
+
 ## OBS preparation (do this once before launching the app)
 
 1. **OBS** then **Tools** then **WebSocket Server Settings**, tick **Enable
