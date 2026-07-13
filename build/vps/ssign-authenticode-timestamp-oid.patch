@@ -28,3 +28,43 @@ index 2f548a7..6d1fe81 100644
 
  /// The `SpcAttributeTypeAndOptionalValue` is identical for every PE signature
  /// (SPC_PE_IMAGE_DATA + the "<<<Obsolete>>>" moniker); captured verbatim.
+
+================================================================================
+SECOND FIX — the digest must cover the 8-byte alignment padding
+================================================================================
+
+`prepare()` computes the Authenticode digest over the file as-is, but `embed()`
+then zero-pads the file to an 8-byte boundary before appending the certificate
+table. That padding lands inside the region Windows hashes, so ssign's digest is
+computed over different bytes than the ones Windows will hash.
+
+Every PE whose length is not already a multiple of 8 therefore gets a signature
+Windows reports as **HashMismatch** — "the file has been changed by an
+unauthorized user or process". That is worse than shipping unsigned: the binary
+looks tampered with.
+
+It hides perfectly behind an 8-aligned test file. Our fixture happened to be
+125440 bytes (8 × 15680) and verified clean, while Velopack's real Setup.exe did
+not — and a broken signature reached a published release before this was caught.
+
+Reproduce: append 5 bytes to any working test PE, sign, and osslsigncode reports
+"MISMATCH!!!". With the fix below, sizes ≡ 0,1,3,5,7 (mod 8) all verify, both
+under osslsigncode and Get-AuthenticodeSignature on Windows.
+
+diff --git a/ssign-core/src/authenticode.rs b/ssign-core/src/authenticode.rs
+--- a/ssign-core/src/authenticode.rs
++++ b/ssign-core/src/authenticode.rs
+@@ -93,6 +93,14 @@ pub fn pe_hash(pe: &[u8]) -> Result<[u8; 32]> {
+     if cert_end < pe.len() {
+         h.update(&pe[cert_end..]);
+     }
++    // An unsigned file is zero-padded to an 8-byte boundary by embed() before the
++    // certificate table is appended. That padding lands INSIDE the hashed region,
++    // so it has to be hashed here too — otherwise every PE whose length is not
++    // already a multiple of 8 gets a digest Windows disagrees with.
++    if l.cert_table_size == 0 {
++        let pad = (8 - (pe.len() % 8)) % 8;
++        h.update(&vec![0u8; pad]);
++    }
+     Ok(h.finalize().into())
+ }

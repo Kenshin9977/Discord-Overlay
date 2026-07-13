@@ -51,6 +51,45 @@ grep -q "OID_TIMESTAMP_TOKEN: &str = \"$OID_AUTHENTICODE\"" "$OID_FILE" || {
 }
 echo "applied: Authenticode timestamp OID fix ($OID_CMS -> $OID_AUTHENTICODE)"
 
+# Fix 2 — the digest must cover the 8-byte alignment padding.
+#
+# ssign hashes the PE, then pads it to an 8-byte boundary before appending the
+# certificate table. That padding sits INSIDE the region Windows hashes, so any
+# binary whose length is not already a multiple of 8 gets a signature Windows
+# reports as HashMismatch — i.e. "this file has been tampered with", which is
+# worse than shipping it unsigned. It is invisible on a test file that happens to
+# be 8-aligned, which is exactly how it reached a release here.
+python3 - "$OID_FILE" <<'PY'
+import sys
+path = sys.argv[1]
+src = open(path, encoding="utf-8").read()
+anchor = """    if cert_end < pe.len() {
+        h.update(&pe[cert_end..]);
+    }
+    Ok(h.finalize().into())
+}"""
+fixed = """    if cert_end < pe.len() {
+        h.update(&pe[cert_end..]);
+    }
+    // An unsigned file is zero-padded to an 8-byte boundary by embed() before the
+    // certificate table is appended. That padding lands INSIDE the hashed region,
+    // so it has to be hashed here too — otherwise every PE whose length is not
+    // already a multiple of 8 gets a digest Windows disagrees with.
+    if l.cert_table_size == 0 {
+        let pad = (8 - (pe.len() % 8)) % 8;
+        h.update(&vec![0u8; pad]);
+    }
+    Ok(h.finalize().into())
+}"""
+if fixed in src:
+    print("pe_hash padding fix: already present")
+    sys.exit(0)
+if anchor not in src:
+    sys.exit("ERROR: pe_hash anchor not found — upstream changed; re-check before moving the pin.")
+open(path, "w", encoding="utf-8").write(src.replace(anchor, fixed, 1))
+print("applied: pe_hash 8-byte alignment padding fix")
+PY
+
 ( cd "$src/ssign" && cargo build --release --locked --bin ssign )
 
 sudo install -D -o root -g root -m 0755 "$src/ssign/target/release/ssign" /opt/sign/bin/ssign
