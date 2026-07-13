@@ -123,6 +123,43 @@ jobs:
             -PackVersion $env:PACK_VERSION `
             -SignTemplate $env:SIGN_TEMPLATE
 
+      - name: Verify the signatures we are about to publish
+        if: steps.sign.outputs.template != ''
+        shell: pwsh
+        # The gate that was missing. vpk reported a clean pack and we published a
+        # Setup.exe that Windows calls tampered with (HashMismatch): the signing
+        # tool got the digest wrong, and nothing downstream ever asked Windows
+        # whether the result was actually valid. "The signer exited 0" is not the
+        # same claim as "this binary verifies".
+        #
+        # Ask the OS itself, on every artifact, and refuse to publish otherwise.
+        # An invalid signature is worse than no signature — it reads as evidence
+        # of tampering.
+        run: |
+          $bad = $false
+          Get-ChildItem .\Releases -Include *.exe -Recurse | ForEach-Object {
+            $s = Get-AuthenticodeSignature $_.FullName
+            $ts = if ($s.TimeStamperCertificate) { $s.TimeStamperCertificate.Subject } else { $null }
+
+            if ($s.Status -ne 'Valid') {
+              Write-Output "FAIL  $($_.Name): Status=$($s.Status) — $($s.StatusMessage)"
+              $bad = $true
+            }
+            elseif (-not $ts) {
+              # Without an RFC3161 countersignature every signature here dies with
+              # the certificate (2027-05-17), including on binaries already shipped.
+              Write-Output "FAIL  $($_.Name): valid but NOT timestamped"
+              $bad = $true
+            }
+            else {
+              Write-Output "ok    $($_.Name): Valid, timestamped by $ts"
+            }
+          }
+          if ($bad) {
+            Write-Error 'Refusing to publish: at least one artifact is not validly signed and timestamped.'
+            exit 1
+          }
+
       - name: Upload artifacts to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
