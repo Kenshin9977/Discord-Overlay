@@ -28,10 +28,28 @@ git clone -q "$SSIGN_REPO" "$src/ssign"
 git -C "$src/ssign" checkout -q "$SSIGN_REV"
 
 # Authenticode needs the Microsoft timestamp OID; upstream uses the generic CMS
-# one, so Windows silently sees no timestamp. See the patch header for detail.
-curl -fsSL -o "$src/oid.patch" "$RAW/ssign-authenticode-timestamp-oid.patch"
-git -C "$src/ssign" apply "$src/oid.patch"
-echo "applied: Authenticode timestamp OID fix"
+# one, so Windows silently sees no timestamp at all. Full rationale, and the diff
+# we send upstream, in ssign-authenticode-timestamp-oid.patch next to this file.
+#
+# Applied as a checked substitution rather than `git apply`: a patch file is at
+# the mercy of CRLF checkouts and blank context lines, and a *silently* failed
+# patch here ships binaries whose signatures die with the certificate. Assert
+# both ends instead.
+OID_FILE="$src/ssign/ssign-core/src/authenticode.rs"
+OID_CMS='1.2.840.113549.1.9.16.2.14'
+OID_AUTHENTICODE='1.3.6.1.4.1.311.3.3.1'
+
+grep -q "OID_TIMESTAMP_TOKEN: &str = \"$OID_CMS\"" "$OID_FILE" || {
+  echo "ERROR: expected upstream OID $OID_CMS not found at pin $SSIGN_REV." >&2
+  echo "       Upstream may have fixed this. Re-read the diff before moving the pin." >&2
+  exit 1
+}
+sed -i "s|OID_TIMESTAMP_TOKEN: &str = \"$OID_CMS\"|OID_TIMESTAMP_TOKEN: \&str = \"$OID_AUTHENTICODE\"|" "$OID_FILE"
+grep -q "OID_TIMESTAMP_TOKEN: &str = \"$OID_AUTHENTICODE\"" "$OID_FILE" || {
+  echo "ERROR: Authenticode timestamp OID fix did not apply." >&2
+  exit 1
+}
+echo "applied: Authenticode timestamp OID fix ($OID_CMS -> $OID_AUTHENTICODE)"
 
 ( cd "$src/ssign" && cargo build --release --locked --bin ssign )
 
