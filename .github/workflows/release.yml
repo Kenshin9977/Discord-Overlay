@@ -93,10 +93,19 @@ jobs:
 
       - name: Publish & pack
         shell: pwsh
+        # Both values come in through the environment rather than being
+        # interpolated into the command line. The sign template contains quotes
+        # of its own, and interpolating it inside PowerShell quotes truncated the
+        # string and shifted every argument after it — the RID was silently lost
+        # and the build failed somewhere unrelated. Env vars also keep workflow
+        # expressions out of an executable line.
+        env:
+          PACK_VERSION: ${{ steps.version.outputs.version }}
+          SIGN_TEMPLATE: ${{ steps.sign.outputs.template }}
         run: |
           .\build\publish.ps1 -Pack `
-            -PackVersion ${{ steps.version.outputs.version }} `
-            -SignTemplate '${{ steps.sign.outputs.template }}'
+            -PackVersion $env:PACK_VERSION `
+            -SignTemplate $env:SIGN_TEMPLATE
 
       - name: Upload artifacts to GitHub Release
         uses: softprops/action-gh-release@v3
