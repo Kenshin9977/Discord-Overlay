@@ -1,0 +1,124 @@
+name: Sign Windows binaries
+description: >-
+  Authenticode-sign PE files on the Certum signing host over SSH, then refuse to
+  continue unless Windows itself accepts the result.
+
+inputs:
+  files:
+    description: >-
+      Paths of the PE files to sign, one per line (or space-separated). Signed in
+      place.
+    required: true
+  ssh-host:
+    description: user@host of the signing account (the SIGN_SSH_HOST secret).
+    required: true
+  ssh-key:
+    description: >-
+      Private key authorised for that account (the SIGN_SSH_KEY secret). It only
+      grants the forced command on the host: pipe a binary in, get a signed one
+      back. No shell, no arguments, no paths.
+    required: true
+  known-hosts:
+    description: >-
+      known_hosts line pinning the host key (the SIGN_SSH_KNOWN_HOSTS secret).
+      Strongly recommended: without it the host key is trusted on first use.
+    required: false
+    default: ''
+  ssh-port:
+    description: SSH port, if not 22.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Set up the signing key
+      shell: pwsh
+      env:
+        SSH_KEY: ${{ inputs.ssh-key }}
+        KNOWN_HOSTS: ${{ inputs.known-hosts }}
+      run: |
+        $keyPath = Join-Path $env:RUNNER_TEMP 'sign_key'
+
+        # LF-only, and exactly one trailing newline. OpenSSH rejects CRLF keys and
+        # also refuses a key whose last line is unterminated — which is what you get
+        # from pasting a key into the GitHub secrets box, since the form strips the
+        # trailing newline. The symptom is misleading:
+        #   Load key "...": error in libcrypto: unsupported
+        #   Permission denied (publickey)
+        # which reads like a rejected key rather than a file ssh could not parse.
+        $key = ($env:SSH_KEY -replace "`r`n", "`n").TrimEnd("`n") + "`n"
+        [IO.File]::WriteAllText($keyPath, $key)
+        icacls $keyPath /inheritance:r | Out-Null
+        icacls $keyPath /grant:r "$($env:USERNAME):F" | Out-Null
+
+        # Fail here, loudly, rather than as an opaque signing error much later.
+        ssh-keygen -y -f $keyPath | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error 'ssh-key is not a usable OpenSSH private key. Re-add the secret, BEGIN/END lines included.'
+          exit 1
+        }
+
+        "SIGN_SSH_KEY_FILE=$keyPath" >> $env:GITHUB_ENV
+        if (-not [string]::IsNullOrWhiteSpace($env:KNOWN_HOSTS)) {
+          $khPath = Join-Path $env:RUNNER_TEMP 'sign_known_hosts'
+          [IO.File]::WriteAllText($khPath, ($env:KNOWN_HOSTS -replace "`r`n", "`n").TrimEnd("`n") + "`n")
+          "SIGN_SSH_KNOWN_HOSTS=$khPath" >> $env:GITHUB_ENV
+        }
+        Write-Output 'Signing key parsed OK.'
+
+    - name: Sign
+      shell: bash
+      env:
+        SIGN_SSH_HOST: ${{ inputs.ssh-host }}
+        SIGN_SSH_PORT: ${{ inputs.ssh-port }}
+        FILES: ${{ inputs.files }}
+      run: |
+        set -euo pipefail
+        # The action lives at .github/actions/sign-windows/, so the repo root — and
+        # the signer it shares with this project's own release pipeline — is three
+        # levels up. One copy, one place to fix it.
+        signer="$GITHUB_ACTION_PATH/../../../build/sign-remote.sh"
+        if [[ ! -f "$signer" ]]; then
+          echo "sign-windows: signer not found at $signer" >&2
+          exit 1
+        fi
+        [[ -n "${SIGN_SSH_PORT:-}" ]] || unset SIGN_SSH_PORT
+
+        for f in $FILES; do
+          [[ -n "$f" ]] || continue
+          bash "$signer" "$f"
+        done
+
+    - name: Verify the signatures Windows will actually see
+      shell: pwsh
+      env:
+        FILES: ${{ inputs.files }}
+      run: |
+        # The gate. A signer exiting 0 is not the same claim as "this binary
+        # verifies" — a tool can get the digest wrong and still report success,
+        # and the result is a binary Windows calls tampered with, which is worse
+        # than shipping unsigned. Ask the OS, on every file.
+        $bad = $false
+        foreach ($f in ($env:FILES -split '\r?\n|\s+' | Where-Object { $_ })) {
+          $s = Get-AuthenticodeSignature $f
+          $ts = $s.TimeStamperCertificate
+
+          if ($s.Status -ne 'Valid') {
+            Write-Output "FAIL  ${f}: Status=$($s.Status) — $($s.StatusMessage)"
+            $bad = $true
+          }
+          elseif (-not $ts) {
+            # Without an RFC3161 countersignature the signature dies with the
+            # certificate, including on binaries already shipped.
+            Write-Output "FAIL  ${f}: valid but NOT timestamped"
+            $bad = $true
+          }
+          else {
+            Write-Output "ok    ${f}: Valid, timestamped by $($ts.Subject)"
+          }
+        }
+        if ($bad) {
+          Write-Error 'Refusing to continue: a binary is not validly signed and timestamped.'
+          exit 1
+        }
