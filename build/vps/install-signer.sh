@@ -63,9 +63,12 @@ sudo touch /opt/sign/.sign.lock /opt/sign/.last-totp-window
 sudo chown sign:sign /opt/sign/.sign.lock /opt/sign/.last-totp-window
 sudo chmod 0644 /opt/sign/.sign.lock /opt/sign/.last-totp-window
 
-# The secrets stay root-owned; the signer reads them as root? No — it runs as
-# `sign`, so they must be readable by that user and nobody else.
-sudo chown root:sign /opt/sign/secret/userid /opt/sign/secret/totp
+# The secrets stay root-owned and are readable by the `sign` group only. The
+# directory needs 0710 — traverse, but not list: without the execute bit `sign`
+# cannot open the files at all no matter how the files themselves are chmod'ed,
+# and withholding read keeps it from enumerating what else lives there.
+sudo chown root:sign /opt/sign/secret /opt/sign/secret/userid /opt/sign/secret/totp
+sudo chmod 0710 /opt/sign/secret
 sudo chmod 0640 /opt/sign/secret/userid /opt/sign/secret/totp
 
 echo
