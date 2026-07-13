@@ -82,7 +82,11 @@ jobs:
           }
 
           Write-Output 'Remote signing configured — binaries will be signed on the VPS.'
-          "template=bash ./build/sign-remote.sh ""{{file}}""" >> $env:GITHUB_OUTPUT
+          # Single quotes around {{file}}, not double: vpk substitutes the path
+          # ALREADY wrapped in double quotes, and bash would then treat the Windows
+          # path separators as escapes and eat them ("C:\Users\..." -> "C:Users...").
+          # sign-remote.sh strips the quote layer vpk added.
+          "template=bash ./build/sign-remote.sh '{{file}}'" >> $env:GITHUB_OUTPUT
 
       - name: Restore local tools (vpk)
         run: dotnet tool restore

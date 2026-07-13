@@ -19,6 +19,15 @@
 set -euo pipefail
 
 file=${1:?usage: sign-remote.sh <file>}
+
+# vpk substitutes {{file}} with the path ALREADY wrapped in double quotes. The
+# template therefore quotes it with single quotes — double quotes would make bash
+# read the Windows separators as escapes and silently eat them, turning
+# C:\Users\...\App.exe into C:UsersApp.exe. The cost is that the quotes vpk added
+# arrive here literally, so strip that one layer.
+file="${file#\"}"
+file="${file%\"}"
+
 : "${SIGN_SSH_HOST:?SIGN_SSH_HOST is required}"
 : "${SIGN_SSH_KEY_FILE:?SIGN_SSH_KEY_FILE is required}"
 port=${SIGN_SSH_PORT:-22}
