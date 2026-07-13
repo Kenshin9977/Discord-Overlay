@@ -1,5 +1,7 @@
 # Discord-Overlay
 
+*English · [Français](README.fr.md)*
+
 A Windows tray app that automatically keeps your **OBS Discord StreamKit** voice
 overlay pointed at the voice channel you're currently in. Switch servers or
 rooms mid-stream and the overlay follows you, no manual URL editing required.
@@ -41,20 +43,31 @@ is unsafe.** Click **More info** then **Run anyway**.
 Here is what is actually going on, so you can judge for yourself:
 
 - The installer **is** code-signed, with a Certum "Open Source Developer"
-  certificate. Windows shows a real publisher name —
-  **`Open Source Developer Rogelio MENDOZA`** — instead of *Unknown publisher*.
-  You can check for yourself: right-click the `.exe` → **Properties** →
-  **Digital Signatures**.
+  certificate, so Windows shows a named publisher rather than *Unknown
+  publisher*. Check it yourself: right-click the `.exe` → **Properties** →
+  **Digital Signatures** → **Details**.
 - SmartScreen does not warn because a file is unsigned. It warns because a file
-  is **not yet well known**. Reputation is earned by download volume over time,
-  and a freshly-signed release starts at zero. There is no way to request or buy
-  an exemption — not even with a more expensive certificate.
+  is **not yet well known**. Reputation is earned through download volume over
+  time, and a freshly-signed release starts at zero. There is no way to request
+  or buy an exemption — not even with a more expensive certificate.
 - So the warning fades on its own as more people install it, and every release
-  before it earned reputation will show it.
+  shows it until reputation has accrued.
 
-If the signature ever shows as *invalid* or the publisher name is anything other
-than the one above, do **not** run the file — that would mean it was tampered
-with, and it did not come from here.
+**Verifying it really came from here.** The signing certificate's SHA-1
+thumbprint is:
+
+```
+80C0A61E3A5E10199070235AE95A9A0DB6971A94
+```
+
+In PowerShell:
+
+```powershell
+(Get-AuthenticodeSignature .\Discord-Overlay-win-Setup.exe).SignerCertificate.Thumbprint
+```
+
+If that does not match, or the signature does not come back as `Valid`, do
+**not** run the file: it was tampered with, and it did not come from here.
 
 ## OBS preparation (do this once before launching the app)
 
@@ -236,16 +249,14 @@ tests/
 build/
   publish.ps1                     dotnet publish + vpk pack
   sign-remote.sh                  per-file signer (delegates to the VPS)
-  vps/                            signing-host container (Dockerfile,
-                                  relogin-internal.sh)
+  vps/                            signing host: signer, installer, patches
 docs/
   SIGNING.md                      Code-signing setup (Certum SimplySign)
 ```
 
-Release binaries are code-signed by delegating to a Certum SimplySign
-host (a Linux VPS) over a locked-down SSH forced command, when the CI
-secrets are configured; see [docs/SIGNING.md](docs/SIGNING.md). Releases
-stay green and unsigned until then.
+Release binaries are code-signed against Certum's cloud over a locked-down SSH
+forced command on a signing host, when the CI secrets are configured; see
+[docs/SIGNING.md](docs/SIGNING.md). Releases stay green and unsigned until then.
 
 ## Tech stack
 
