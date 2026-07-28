@@ -20,18 +20,17 @@ working the way a Chocolatey user expects.
 
 ---
 
-## Before either will be accepted: the repository needs a LICENSE
+## The licence
 
-There is no LICENSE file in this repository. Under copyright law that means
-nobody may redistribute it, which is exactly what both of these channels do.
+MIT, in `LICENSE` at the repository root. Both channels need it: without a
+licence, redistribution is not permitted by default, which is exactly what they
+do. WinGet requires the `License` field and Chocolatey moderators check the
+`licenseUrl` resolves.
 
-WinGet requires a `License` field. Chocolatey moderators check for one. Neither
-will merge without it, and the manifests here claim MIT on the assumption that
-this is what you intend, matching your other public projects.
-
-**Add a LICENSE file, or change the `License:` line in the manifests to match
-what you actually want.** This is the one decision in this change that is not
-mechanical.
+If the licence ever changes, three places have to change with it: `LICENSE`, the
+`License:` line in `packaging/winget/*.locale.en-US.yaml`, and `licenseUrl` in
+the nuspec. A manifest claiming a licence the repository does not carry is the
+kind of thing moderation catches.
 
 ---
 
