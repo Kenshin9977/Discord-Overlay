@@ -10,6 +10,18 @@
     <ApplicationIcon>..\..\Discord-Overlay.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <!-- The Microsoft Store edition.
+       The Store certifies one binary and distributes it, so an app that
+       replaces itself afterwards is running code the Store never reviewed and
+       leaves its listing describing a version nobody has. This build asks the
+       Store to be the update channel and does not update itself.
+
+       Velopack still packs it, so it is still a real installer with a real
+       uninstall entry. Only the checking is gone. -->
+  <PropertyGroup Condition="'$(StoreEdition)' == 'true'">
+    <DefineConstants>$(DefineConstants);STORE_EDITION</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <!-- Also embedded, not just stamped on the exe: the tray icon is loaded as
          an ImageSource through a pack:// URI, which needs it inside the

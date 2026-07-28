@@ -11,7 +11,7 @@ it is not worth wiring up for an app that ships a few times a year.
 
 | Requirement | Status |
 | --- | --- |
-| `.msi` or `.exe` installer | `Discord-Overlay-win-Setup.exe`, from vpk |
+| `.msi` or `.exe` installer | `Discord-Overlay-store-Setup.exe`, from vpk |
 | Every PE file signed, chaining to a CA in the Microsoft Trusted Root Program | Done by the release workflow, which refuses to publish otherwise |
 | Versioned HTTPS URL, binary must never change after submission | GitHub release assets are immutable per tag |
 | Standalone installer, not a downloader stub | Velopack bundles everything |
@@ -28,7 +28,7 @@ Create the product in Partner Center, reserve the name, then on **Packages**:
 | Field | Value |
 | --- | --- |
 | App type | EXE |
-| Package URL | `https://github.com/Kenshin9977/Discord-Overlay/releases/download/v<version>/Discord-Overlay-win-Setup.exe` |
+| Package URL | `https://github.com/Kenshin9977/Discord-Overlay/releases/download/v<version>/Discord-Overlay-store-Setup.exe` |
 | Architecture | x64 |
 | Installer parameters | `--silent` |
 | Languages | `en-us`, plus `fr-fr` if the app is translated |
@@ -55,23 +55,28 @@ usually takes a day or two.
 The version number comes from your installer, not from the Store: Store-side
 version numbering is not supported for Win32 apps.
 
-## The one thing to decide first
+## Self-updating is already handled
 
-Discord-Overlay updates itself through Velopack. A Store install would then move to a
-version the Store did not certify and does not know about, which is the opposite
-of what a Store listing promises its users.
+Every release builds two channels from the same code:
 
-Two honest options:
+| | Artifact | Updates |
+| --- | --- | --- |
+| `win` | `Discord-Overlay-win-Setup.exe` | the app updates itself from GitHub |
+| `store` | `Discord-Overlay-store-Setup.exe` | none; the Store is the update channel |
 
-1. **Leave self-updating on.** Simplest, and what most Win32 Store apps do in
-   practice. The Store listing drifts behind the installed version.
-2. **Build a Store edition with the updater disabled**, and let the Store be the
-   update channel. Cleaner, and it costs one build flag plus one more artifact in
-   the release, the same way usbscope already splits its two editions.
+Submit the `store` one. The `store` build has self-updating compiled out via
+`StoreEdition=true`, which sets `STORE_EDITION`, and the tray menu drops its
+"Check for updates" entry rather than showing a dead one.
 
-Option 2 is the right one if the Store ever becomes a meaningful share of
-installs. Until then option 1 is defensible, as long as it is a decision rather
-than an oversight.
+This matters because the Store certifies one specific binary. An app that
+replaces itself afterwards is running code the Store never reviewed, and its
+listing ends up describing a version nobody is running.
+
+The release workflow installs and uninstalls both channels on every run, so
+neither can quietly stop being silent.
+
+WinGet and Chocolatey keep getting the `win` build: someone installing with a
+package manager expects the app to behave as it does when downloaded directly.
 
 ## Account
 

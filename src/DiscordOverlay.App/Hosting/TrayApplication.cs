@@ -87,7 +87,14 @@ public sealed class TrayApplication : IDisposable
         menu.Items.Add(new Separator());
         menu.Items.Add(Item(Strings.TrayMenuSettings, OnSettingsClicked));
         menu.Items.Add(Item(Strings.TrayMenuOverlayAppearance, OnOverlayAppearanceClicked));
-        menu.Items.Add(Item(Strings.TrayMenuCheckUpdates, OnCheckForUpdatesClicked));
+
+        // Hidden rather than disabled in the Store edition. A greyed-out
+        // "Check for updates" invites the user to wonder what is broken; its
+        // absence reads as "something else handles this", which is true.
+        if (AppUpdater.SelfUpdatesAllowed)
+        {
+            menu.Items.Add(Item(Strings.TrayMenuCheckUpdates, OnCheckForUpdatesClicked));
+        }
         menu.Items.Add(Item(Strings.TrayMenuOpenLogFolder, OnOpenLogFolderClicked));
         menu.Items.Add(new Separator());
         menu.Items.Add(Item(Strings.TrayMenuQuit, OnQuitClicked));
