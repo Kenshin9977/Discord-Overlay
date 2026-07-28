@@ -1,0 +1,38 @@
+# WinGet installer manifest, for the first submission to microsoft/winget-pkgs.
+#
+# Once that first submission is merged, releases update it automatically: the
+# release workflow runs `wingetcreate update`, which carries everything below
+# forward and changes only the version, the URL and the hash.
+#
+# Placeholders marked <FILL> are filled in by hand for the initial submission.
+
+PackageIdentifier: Kenshin9977.DiscordOverlay
+PackageVersion: <FILL:VERSION>
+
+MinimumOSVersion: 10.0.17763.0
+InstallerType: exe
+
+# Velopack installs into the user's profile and updates itself from there.
+# Declaring user scope is not a preference, it is a description: an elevated
+# install would land in the administrator's profile and be invisible to the
+# person who ran the command.
+Scope: user
+InstallerSwitches:
+  Silent: --silent
+  SilentWithProgress: --silent
+
+# Velopack writes its own uninstall entry under this name. Without it WinGet
+# cannot tell an already-installed copy from a missing one, and `winget upgrade`
+# would never offer this package.
+AppsAndFeaturesEntries:
+  - DisplayName: Discord-Overlay
+    Publisher: Kenshin9977
+    InstallerType: exe
+
+Installers:
+  - Architecture: x64
+    InstallerUrl: <FILL:URL>
+    InstallerSha256: <FILL:SHA256>
+
+ManifestType: installer
+ManifestVersion: 1.6.0

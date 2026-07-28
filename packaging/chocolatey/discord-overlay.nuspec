@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>discord-overlay</id>
+    <version>$version$</version>
+    <packageSourceUrl>https://github.com/Kenshin9977/Discord-Overlay/tree/main/packaging/chocolatey</packageSourceUrl>
+    <owners>Kenshin9977</owners>
+
+    <title>Discord-Overlay</title>
+    <authors>Kenshin9977</authors>
+    <projectUrl>https://github.com/Kenshin9977/Discord-Overlay</projectUrl>
+    <licenseUrl>https://github.com/Kenshin9977/Discord-Overlay/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/Kenshin9977/Discord-Overlay</projectSourceUrl>
+    <bugTrackerUrl>https://github.com/Kenshin9977/Discord-Overlay/issues</bugTrackerUrl>
+    <docsUrl>https://github.com/Kenshin9977/Discord-Overlay#readme</docsUrl>
+    <iconUrl>https://raw.githubusercontent.com/Kenshin9977/Discord-Overlay/main/Discord-Overlay.ico</iconUrl>
+    <tags>discord obs streaming overlay streamkit voice twitch tray windows utility</tags>
+
+    <summary>Keeps your OBS Discord voice overlay pointed at the channel you are actually in.</summary>
+    <description><![CDATA[
+The Discord StreamKit overlay is tied to one voice channel, chosen when you set
+it up. Move to another room or another server mid-stream and the overlay keeps
+showing the channel you left, so your viewers watch an empty box while you talk
+somewhere else. The usual fix is to alt-tab out of the game and edit an OBS
+browser source live.
+
+Discord-Overlay follows you. When you change voice channel it repoints the
+overlay at the one you are in, without touching OBS by hand and without leaving
+your game.
+
+It sits in the tray and needs setting up once.
+
+**About this package**
+
+Installs the portable build, machine-wide, and updates through Chocolatey. The
+installer on the releases page instead installs per user and updates itself; use
+whichever suits how you manage the machine.
+]]></description>
+
+    <releaseNotes>https://github.com/Kenshin9977/Discord-Overlay/releases/tag/v$version$</releaseNotes>
+  </metadata>
+
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

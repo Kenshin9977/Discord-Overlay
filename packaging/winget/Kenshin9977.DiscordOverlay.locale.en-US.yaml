@@ -1,0 +1,45 @@
+PackageIdentifier: Kenshin9977.DiscordOverlay
+PackageVersion: <FILL:VERSION>
+PackageLocale: en-US
+
+Publisher: Kenshin9977
+PublisherUrl: https://github.com/Kenshin9977
+PublisherSupportUrl: https://github.com/Kenshin9977/Discord-Overlay/issues
+
+PackageName: Discord-Overlay
+PackageUrl: https://github.com/Kenshin9977/Discord-Overlay
+
+License: MIT
+LicenseUrl: https://github.com/Kenshin9977/Discord-Overlay/blob/main/LICENSE
+Copyright: Copyright (c) Kenshin9977
+
+ShortDescription: Keeps your OBS Discord voice overlay pointed at the channel you are actually in.
+
+Description: |-
+  The Discord StreamKit overlay is tied to one voice channel, chosen when you set
+  it up. Move to another room or another server mid-stream and the overlay keeps
+  showing the channel you left, so your viewers watch an empty box while you talk
+  somewhere else. The usual fix is to alt-tab out of the game and edit an OBS
+  browser source live.
+
+  Discord-Overlay follows you. When you change voice channel it repoints the
+  overlay at the one you are in, without touching OBS by hand and without leaving
+  your game.
+
+  It sits in the tray and needs setting up once.
+
+Moniker: discord-overlay
+Tags:
+  - discord
+  - obs
+  - streaming
+  - overlay
+  - streamkit
+  - voice
+  - twitch
+  - tray
+
+ReleaseNotesUrl: https://github.com/Kenshin9977/Discord-Overlay/releases
+
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

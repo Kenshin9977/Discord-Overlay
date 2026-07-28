@@ -1,0 +1,34 @@
+VERIFICATION
+
+Verification is intended to assist the Chocolatey moderators and any user who
+wants to confirm that what this package downloads is what the publisher built.
+
+This package embeds no binary. It downloads a zip from the project's own GitHub
+release and checks it against a SHA-256 recorded in
+tools\chocolateyinstall.ps1 at pack time.
+
+To verify:
+
+1. Note the URL and the checksum in tools\chocolateyinstall.ps1.
+
+2. Download that zip yourself:
+
+     https://github.com/Kenshin9977/Discord-Overlay/releases
+
+3. Compare the checksum:
+
+     Get-FileHash .\Discord-Overlay-win-Portable.zip -Algorithm SHA256
+
+   It must equal the value of $checksum64 in chocolateyinstall.ps1.
+
+4. The executables inside are Authenticode-signed and RFC3161 timestamped. The
+   release workflow refuses to publish an artifact that Windows does not
+   consider validly signed, so this should also pass:
+
+     Get-AuthenticodeSignature .\DiscordOverlay.exe
+
+Source for this package and for the application:
+
+     https://github.com/Kenshin9977/Discord-Overlay
+
+The software is published under the licence in LICENSE at the repository root.
