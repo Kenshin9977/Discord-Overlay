@@ -167,6 +167,37 @@ jobs:
             exit 1
           }
 
+      # The Microsoft Store runs the installer unattended, and an installer that
+      # opens a window fails certification. Proving it here means the guarantee
+      # cannot quietly regress between submissions.
+      #
+      # It also catches the Velopack trap: the installer runs the app once with
+      # a --veloapp-* argument at install and again at uninstall. An app that
+      # ignores those arguments starts its tray icon in the middle of a silent
+      # install, and leaves the uninstaller waiting a full minute.
+      - name: Prove the installer installs and uninstalls silently
+        shell: pwsh
+        run: |
+          $install = Join-Path $env:LOCALAPPDATA 'Discord-Overlay'
+
+          $setup = Start-Process .\Releases\Discord-Overlay-win-Setup.exe -ArgumentList '--silent' -PassThru -Wait
+          if ($setup.ExitCode -ne 0) { Write-Error "Silent install exited $($setup.ExitCode)."; exit 1 }
+          if (-not (Test-Path $install)) { Write-Error 'Silent install produced no installation.'; exit 1 }
+
+          Start-Sleep -Seconds 3
+          if (Get-Process DiscordOverlay -ErrorAction SilentlyContinue) {
+            Write-Error 'The app started during a silent install. It must handle --veloapp-* and exit.'
+            exit 1
+          }
+
+          $uninstall = Start-Process (Join-Path $install 'Update.exe') -ArgumentList '--uninstall', '--silent' -PassThru -Wait
+          if ($uninstall.ExitCode -ne 0) { Write-Error "Silent uninstall exited $($uninstall.ExitCode)."; exit 1 }
+
+          Start-Sleep -Seconds 8
+          if (Test-Path $install) { Write-Error 'Uninstall left the installation directory behind.'; exit 1 }
+
+          Write-Output 'Installs silently and uninstalls cleanly.'
+
       # Hashed here, from the exact bytes about to be uploaded, rather than
       # downstream from a re-download that could differ. Both package managers
       # pin on these.
