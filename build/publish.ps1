@@ -24,6 +24,12 @@ param(
     [string] $RuntimeIdentifier = 'win-x64',
     [string] $PackVersion = '0.1.0',
     [string] $PackId = 'Discord-Overlay',
+
+    # win    the ordinary build, which updates itself from GitHub releases.
+    # store  the Microsoft Store build, which does not: the Store certifies one
+    #        binary and delivers its own updates, and an app that swaps itself
+    #        afterwards is running code the Store never reviewed.
+    [ValidateSet('win', 'store')]
     [string] $Channel = 'win',
     [switch] $NoCompress,
     [switch] $Pack,
@@ -41,7 +47,9 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $proj = Join-Path $repoRoot 'src/DiscordOverlay.App/DiscordOverlay.App.csproj'
-$publishDir = Join-Path $repoRoot "publish/$RuntimeIdentifier"
+# Keyed on the channel, not the RID: the two channels are different builds of
+# the same RID and would otherwise overwrite each other's output.
+$publishDir = Join-Path $repoRoot "publish/$Channel"
 $releasesDir = Join-Path $repoRoot 'Releases'
 $icon = Join-Path $repoRoot 'Discord-Overlay.ico'
 
@@ -83,6 +91,9 @@ $publishArgs = @(
 )
 if (-not $NoCompress) {
     $publishArgs += '-p:EnableCompressionInSingleFile=true'
+}
+if ($Channel -eq 'store') {
+    $publishArgs += '-p:StoreEdition=true'
 }
 
 Write-Host "Publishing $proj -> $publishDir ($RuntimeIdentifier, $Configuration)" -ForegroundColor Cyan
@@ -142,9 +153,10 @@ if ($Pack) {
         throw "vpk pack failed with exit code $LASTEXITCODE"
     }
 
-    $setup = Join-Path $releasesDir 'Discord-Overlay-win-Setup.exe'
-    if (Test-Path $setup) {
-        $setupSize = (Get-Item $setup).Length
-        Write-Host ("Setup ready: {0} ({1:N1} MB)" -f $setup, ($setupSize / 1MB)) -ForegroundColor Green
-    }
+    # Named after the channel, so the two builds cannot be confused for each
+    # other in Releases/ or in a Store submission URL.
+    $setup = Join-Path $releasesDir "$PackId-$Channel-Setup.exe"
+    if (-not (Test-Path $setup)) { throw "vpk did not produce $setup" }
+
+    Write-Host ("Setup ready: {0} ({1:N1} MB)" -f $setup, ((Get-Item $setup).Length / 1MB)) -ForegroundColor Green
 }

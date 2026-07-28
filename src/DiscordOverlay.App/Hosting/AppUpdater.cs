@@ -12,9 +12,34 @@ public sealed class AppUpdater
     private readonly UpdateManager? updateManager;
     private readonly ILogger<AppUpdater> logger;
 
+    /// Whether this build is allowed to replace itself.
+    ///
+    /// False in the Store edition, and that is the point of the edition. The
+    /// Store certifies one specific binary and distributes it; an app that
+    /// quietly swaps itself afterwards is running code the Store never saw, and
+    /// leaves its listing describing a version nobody is actually running.
+    /// There, delivering updates is the Store's job, and this stays out of it.
+    public static bool SelfUpdatesAllowed =>
+#if STORE_EDITION
+        false;
+#else
+        true;
+#endif
+
     public AppUpdater(IConfiguration configuration, ILogger<AppUpdater> logger)
     {
         this.logger = logger;
+
+        // Left null, every method below already degrades to "nothing to do":
+        // IsInstalled is false, CheckForUpdatesAsync returns null and
+        // DownloadAndApplyAsync returns false. No second code path to keep in
+        // step with the first.
+        if (!SelfUpdatesAllowed)
+        {
+            logger.LogInformation("Self-updating is off in this edition; the Store delivers updates.");
+            return;
+        }
+
         var repository = configuration["Update:GitHubRepository"] ?? DefaultGitHubRepository;
 
         try

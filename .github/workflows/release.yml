@@ -23,6 +23,8 @@ jobs:
       setup_sha256: ${{ steps.hashes.outputs.setup_sha256 }}
       portable_url: ${{ steps.hashes.outputs.portable_url }}
       portable_sha256: ${{ steps.hashes.outputs.portable_sha256 }}
+      store_url: ${{ steps.hashes.outputs.store_url }}
+      store_sha256: ${{ steps.hashes.outputs.store_sha256 }}
 
     steps:
       - uses: actions/checkout@v7
@@ -126,9 +128,15 @@ jobs:
           PACK_VERSION: ${{ steps.version.outputs.version }}
           SIGN_TEMPLATE: ${{ steps.sign.outputs.template }}
         run: |
-          .\build\publish.ps1 -Pack `
-            -PackVersion $env:PACK_VERSION `
-            -SignTemplate $env:SIGN_TEMPLATE
+          # Two channels from one codebase. `store` is the same app with
+          # self-updating compiled out, because the Store certifies one binary
+          # and delivers its own updates.
+          foreach ($channel in 'win', 'store') {
+            .\build\publish.ps1 -Pack `
+              -PackVersion $env:PACK_VERSION `
+              -Channel $channel `
+              -SignTemplate $env:SIGN_TEMPLATE
+          }
 
       - name: Verify the signatures we are about to publish
         if: steps.sign.outputs.template != ''
@@ -180,23 +188,27 @@ jobs:
         run: |
           $install = Join-Path $env:LOCALAPPDATA 'Discord-Overlay'
 
-          $setup = Start-Process .\Releases\Discord-Overlay-win-Setup.exe -ArgumentList '--silent' -PassThru -Wait
-          if ($setup.ExitCode -ne 0) { Write-Error "Silent install exited $($setup.ExitCode)."; exit 1 }
-          if (-not (Test-Path $install)) { Write-Error 'Silent install produced no installation.'; exit 1 }
+          # Both channels: WinGet installs the `win` one unattended and the
+          # Store installs the `store` one, so both have to be silent.
+          foreach ($channel in 'win', 'store') {
+            $setup = Start-Process ".\Releases\Discord-Overlay-$channel-Setup.exe" -ArgumentList '--silent' -PassThru -Wait
+            if ($setup.ExitCode -ne 0) { Write-Error "$channel : silent install exited $($setup.ExitCode)."; exit 1 }
+            if (-not (Test-Path $install)) { Write-Error "$channel : silent install produced no installation."; exit 1 }
 
-          Start-Sleep -Seconds 3
-          if (Get-Process DiscordOverlay -ErrorAction SilentlyContinue) {
-            Write-Error 'The app started during a silent install. It must handle --veloapp-* and exit.'
-            exit 1
+            Start-Sleep -Seconds 3
+            if (Get-Process DiscordOverlay -ErrorAction SilentlyContinue) {
+              Write-Error "$channel : the app started during a silent install. It must handle --veloapp-* and exit."
+              exit 1
+            }
+
+            $uninstall = Start-Process (Join-Path $install 'Update.exe') -ArgumentList '--uninstall', '--silent' -PassThru -Wait
+            if ($uninstall.ExitCode -ne 0) { Write-Error "$channel : silent uninstall exited $($uninstall.ExitCode)."; exit 1 }
+
+            Start-Sleep -Seconds 8
+            if (Test-Path $install) { Write-Error "$channel : uninstall left the installation directory behind."; exit 1 }
+
+            Write-Output "$channel : installs silently, uninstalls cleanly."
           }
-
-          $uninstall = Start-Process (Join-Path $install 'Update.exe') -ArgumentList '--uninstall', '--silent' -PassThru -Wait
-          if ($uninstall.ExitCode -ne 0) { Write-Error "Silent uninstall exited $($uninstall.ExitCode)."; exit 1 }
-
-          Start-Sleep -Seconds 8
-          if (Test-Path $install) { Write-Error 'Uninstall left the installation directory behind.'; exit 1 }
-
-          Write-Output 'Installs silently and uninstalls cleanly.'
 
       # Hashed here, from the exact bytes about to be uploaded, rather than
       # downstream from a re-download that could differ. Both package managers
@@ -210,11 +222,17 @@ jobs:
 
           $setup = (Get-FileHash .\Releases\Discord-Overlay-win-Setup.exe -Algorithm SHA256).Hash
           $zip   = (Get-FileHash .\Releases\Discord-Overlay-win-Portable.zip -Algorithm SHA256).Hash
+          $store = (Get-FileHash .\Releases\Discord-Overlay-store-Setup.exe -Algorithm SHA256).Hash
 
-          "setup_url=$base/Discord-Overlay-win-Setup.exe"      >> $env:GITHUB_OUTPUT
-          "setup_sha256=$setup"                                >> $env:GITHUB_OUTPUT
+          # WinGet and Chocolatey take the self-updating build: their users
+          # expect the app to behave as it does when downloaded directly. Only
+          # the Store gets the one with updating compiled out.
+          "setup_url=$base/Discord-Overlay-win-Setup.exe"       >> $env:GITHUB_OUTPUT
+          "setup_sha256=$setup"                                 >> $env:GITHUB_OUTPUT
           "portable_url=$base/Discord-Overlay-win-Portable.zip" >> $env:GITHUB_OUTPUT
-          "portable_sha256=$zip"                               >> $env:GITHUB_OUTPUT
+          "portable_sha256=$zip"                                >> $env:GITHUB_OUTPUT
+          "store_url=$base/Discord-Overlay-store-Setup.exe"     >> $env:GITHUB_OUTPUT
+          "store_sha256=$store"                                 >> $env:GITHUB_OUTPUT
 
       - name: Upload artifacts to GitHub Release
         uses: softprops/action-gh-release@v3
@@ -224,11 +242,12 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             Releases/Discord-Overlay-win-Setup.exe
-            Releases/Discord-Overlay-${{ steps.version.outputs.version }}-full.nupkg
             Releases/Discord-Overlay-win-Portable.zip
-            Releases/RELEASES
-            Releases/releases.win.json
-            Releases/assets.win.json
+            Releases/Discord-Overlay-store-Setup.exe
+            Releases/*.nupkg
+            Releases/RELEASES*
+            Releases/releases.*.json
+            Releases/assets.*.json
 
   # The two package managers get different artifacts, and the difference is not
   # arbitrary. Velopack installs per user and updates itself; Chocolatey runs
