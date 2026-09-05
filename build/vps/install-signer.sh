@@ -11,7 +11,10 @@
 set -euo pipefail
 
 SSIGN_REPO=https://github.com/Le-Syl21/ssign
-SSIGN_REV=f4fc7d7aca180982a11d9be4ee5aebd394ad5545
+# v0.1.5. Carries both Authenticode fixes this repo used to patch in locally
+# (timestamp OID, alignment padding), plus bounds checks on the certificate
+# table and a digest-matched signature response.
+SSIGN_REV=dbe67515789760bbb93499007723daf8048d4d4e
 RAW=https://raw.githubusercontent.com/Kenshin9977/Discord-Overlay/master/build/vps
 
 command -v cargo >/dev/null 2>&1 || {
@@ -27,68 +30,23 @@ trap 'rm -rf "$src"' EXIT
 git clone -q "$SSIGN_REPO" "$src/ssign"
 git -C "$src/ssign" checkout -q "$SSIGN_REV"
 
-# Authenticode needs the Microsoft timestamp OID; upstream uses the generic CMS
-# one, so Windows silently sees no timestamp at all. Full rationale, and the diff
-# we send upstream, in ssign-authenticode-timestamp-oid.patch next to this file.
-#
-# Applied as a checked substitution rather than `git apply`: a patch file is at
-# the mercy of CRLF checkouts and blank context lines, and a *silently* failed
-# patch here ships binaries whose signatures die with the certificate. Assert
-# both ends instead.
-OID_FILE="$src/ssign/ssign-core/src/authenticode.rs"
-OID_CMS='1.2.840.113549.1.9.16.2.14'
-OID_AUTHENTICODE='1.3.6.1.4.1.311.3.3.1'
+# Two Authenticode bugs cost a great deal to find here and both ship binaries
+# that look fine until they are not — see docs/SIGNING.md. They are fixed
+# upstream now, so there is nothing left to patch, but a pin move that lost
+# either one would be silent. Assert them instead, before spending a build.
+AUTH="$src/ssign/ssign-core/src/authenticode.rs"
 
-grep -q "OID_TIMESTAMP_TOKEN: &str = \"$OID_CMS\"" "$OID_FILE" || {
-  echo "ERROR: expected upstream OID $OID_CMS not found at pin $SSIGN_REV." >&2
-  echo "       Upstream may have fixed this. Re-read the diff before moving the pin." >&2
+grep -q 'OID_TIMESTAMP_TOKEN: &str = "1.3.6.1.4.1.311.3.3.1"' "$AUTH" || {
+  echo "ERROR: the RFC3161 token is not embedded under the Authenticode OID at $SSIGN_REV." >&2
+  echo "       Signatures would carry a timestamp Windows cannot see. See docs/SIGNING.md." >&2
   exit 1
 }
-sed -i "s|OID_TIMESTAMP_TOKEN: &str = \"$OID_CMS\"|OID_TIMESTAMP_TOKEN: \&str = \"$OID_AUTHENTICODE\"|" "$OID_FILE"
-grep -q "OID_TIMESTAMP_TOKEN: &str = \"$OID_AUTHENTICODE\"" "$OID_FILE" || {
-  echo "ERROR: Authenticode timestamp OID fix did not apply." >&2
+grep -q 'let pad = (8 - (pe.len() % 8)) % 8;' "$AUTH" || {
+  echo "ERROR: pe_hash does not cover the 8-byte alignment padding at $SSIGN_REV." >&2
+  echo "       Any PE whose length is not a multiple of 8 would verify as tampered with." >&2
   exit 1
 }
-echo "applied: Authenticode timestamp OID fix ($OID_CMS -> $OID_AUTHENTICODE)"
-
-# Fix 2 — the digest must cover the 8-byte alignment padding.
-#
-# ssign hashes the PE, then pads it to an 8-byte boundary before appending the
-# certificate table. That padding sits INSIDE the region Windows hashes, so any
-# binary whose length is not already a multiple of 8 gets a signature Windows
-# reports as HashMismatch — i.e. "this file has been tampered with", which is
-# worse than shipping it unsigned. It is invisible on a test file that happens to
-# be 8-aligned, which is exactly how it reached a release here.
-python3 - "$OID_FILE" <<'PY'
-import sys
-path = sys.argv[1]
-src = open(path, encoding="utf-8").read()
-anchor = """    if cert_end < pe.len() {
-        h.update(&pe[cert_end..]);
-    }
-    Ok(h.finalize().into())
-}"""
-fixed = """    if cert_end < pe.len() {
-        h.update(&pe[cert_end..]);
-    }
-    // An unsigned file is zero-padded to an 8-byte boundary by embed() before the
-    // certificate table is appended, and that padding falls inside the region
-    // Windows hashes. It must be hashed here too, or every PE whose length is not
-    // already a multiple of 8 gets a digest Windows disagrees with.
-    if l.cert_table_size == 0 {
-        let pad = (8 - (pe.len() % 8)) % 8;
-        h.update(&[0u8; 8][..pad]);
-    }
-    Ok(h.finalize().into())
-}"""
-if fixed in src:
-    print("pe_hash padding fix: already present")
-    sys.exit(0)
-if anchor not in src:
-    sys.exit("ERROR: pe_hash anchor not found — upstream changed; re-check before moving the pin.")
-open(path, "w", encoding="utf-8").write(src.replace(anchor, fixed, 1))
-print("applied: pe_hash 8-byte alignment padding fix")
-PY
+echo "verified: Authenticode timestamp OID + pe_hash padding fixes present upstream"
 
 ( cd "$src/ssign" && cargo build --release --locked --bin ssign )
 
