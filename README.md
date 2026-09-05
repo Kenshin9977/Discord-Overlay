@@ -167,11 +167,14 @@ Schema:
     "Logo": "white",
     "TextColor": "#ffffff",
     "TextSize": 14,
+    "TextOutlineColor": "#000000",
+    "TextOutlineSize": 0,
     "BackgroundColor": "#1e2124",
     "BackgroundOpacity": 0,
     "LimitSpeaking": false,
     "SmallAvatars": false,
-    "HideNames": false
+    "HideNames": false,
+    "StreamerAvatarFirst": false
   },
   "Update": {
     "GitHubRepository": "https://github.com/Kenshin9977/Discord-Overlay"
@@ -182,6 +185,21 @@ Schema:
 Host, port, password and Browser Source name changes take effect after an
 app restart since the OBS WebSocket connection is established once at
 startup. StreamKit overlay options pick up live.
+
+A few of the StreamKit options are worth spelling out:
+
+- **`BackgroundOpacity`** is a fraction from `0` (transparent) to `1` (opaque)
+  — the scale StreamKit's own `bg_opacity` uses. Decimals use a dot: `0.75`.
+  A value above 1 is read as the old 0-100 percentage, so a `settings.json`
+  written by an earlier version keeps the background it had.
+- **`StreamerAvatarFirst`** pins your own profile to the top of the voice
+  stack instead of sorting it in alphabetically. It is StreamKit's "Show My
+  Avatar First".
+
+The file is meant to be hand-editable, so quoted numbers (`"0.75"`), `//`
+comments and trailing commas are all accepted. If an edit does leave it
+unparseable, the app falls back to defaults and keeps your version as
+`settings.invalid.json` next to it rather than overwriting it.
 
 ## Troubleshooting
 

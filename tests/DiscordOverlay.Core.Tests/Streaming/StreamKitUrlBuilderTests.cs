@@ -35,10 +35,11 @@ public class StreamKitUrlBuilderTests
         Assert.Contains("logo=white", url);
         Assert.Contains("text_color=%23ffffff", url);
         Assert.Contains("text_size=14", url);
-        Assert.Contains("bg_opacity=0", url);
+        Assert.Contains("bg_opacity=0&", url);
         Assert.Contains("limit_speaking=false", url);
         Assert.Contains("small_avatars=false", url);
         Assert.Contains("hide_names=false", url);
+        Assert.Contains("streamer_avatar_first=false", url);
     }
 
     [Fact]
@@ -49,9 +50,10 @@ public class StreamKitUrlBuilderTests
             ShowIcon = false,
             OnlineOnly = false,
             TextSize = 18,
-            BackgroundOpacity = 50,
+            BackgroundOpacity = 0.5,
             LimitSpeaking = true,
             HideNames = true,
+            StreamerAvatarFirst = true,
         });
         var info = new DiscordVoiceChannelInfo { ChannelId = "C", GuildId = "G" };
 
@@ -63,6 +65,26 @@ public class StreamKitUrlBuilderTests
         Assert.Contains("bg_opacity=0.5", url);
         Assert.Contains("limit_speaking=true", url);
         Assert.Contains("hide_names=true", url);
+        Assert.Contains("streamer_avatar_first=true", url);
+    }
+
+    [Theory]
+    // The scale users actually write, and the one StreamKit itself uses.
+    [InlineData(0, "0")]
+    [InlineData(0.75, "0.75")]
+    [InlineData(1, "1")]
+    // Above 1 is a settings.json from when this was a 0-100 percentage.
+    [InlineData(50, "0.5")]
+    [InlineData(95, "0.95")]
+    // Nonsense in either reading still has to produce a value StreamKit accepts.
+    [InlineData(150, "1")]
+    [InlineData(-3, "0")]
+    public void Build_TreatsBackgroundOpacityAsAFraction(double configured, string expected)
+    {
+        var sut = BuildSut(new StreamKitOverlayOptions { BackgroundOpacity = configured });
+        var info = new DiscordVoiceChannelInfo { ChannelId = "C", GuildId = "G" };
+
+        Assert.Contains($"bg_opacity={expected}&", sut.Build(info)!);
     }
 
     [Fact]

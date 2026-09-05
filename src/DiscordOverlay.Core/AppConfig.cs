@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using DiscordOverlay.Core.Discord;
 using DiscordOverlay.Core.Streaming;
 
@@ -23,6 +24,15 @@ public static class AppConfigStore
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
+
+        // This file is documented as hand-editable, so read it the way a person
+        // writes one: a quoted number ("0.75"), a trailing comma, a // note.
+        // Rejecting those costs the user every other setting in the file, since
+        // a parse failure here falls back to defaults and the next save writes
+        // them over the top.
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        AllowTrailingCommas = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
     };
 
     public static async Task<AppConfig> LoadAsync(string? path = null, CancellationToken cancellationToken = default)
@@ -43,6 +53,10 @@ public static class AppConfigStore
         }
         catch (JsonException)
         {
+            // Defaults keep the app running, but the next save would overwrite
+            // the file with them. Keep the user's version so a typo costs a
+            // rename, not the whole configuration.
+            TryPreserveUnreadableFile(path);
             return new AppConfig();
         }
     }
@@ -62,5 +76,24 @@ public static class AppConfigStore
         var json = JsonSerializer.Serialize(config, JsonOptions);
         await File.WriteAllTextAsync(temp, json, cancellationToken).ConfigureAwait(false);
         File.Move(temp, path, overwrite: true);
+    }
+
+    /// <summary>
+    /// Copy a settings file we could not parse next to itself, so its contents
+    /// survive being replaced by defaults. Best-effort by design: failing to
+    /// take the backup must not stop the app from starting.
+    /// </summary>
+    private static void TryPreserveUnreadableFile(string path)
+    {
+        try
+        {
+            File.Copy(path, Path.ChangeExtension(path, ".invalid.json"), overwrite: true);
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 }

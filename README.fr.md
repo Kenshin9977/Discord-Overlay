@@ -174,11 +174,14 @@ l'écrit ; vous pouvez l'éditer à la main si vous voulez). Schéma :
     "Logo": "white",
     "TextColor": "#ffffff",
     "TextSize": 14,
+    "TextOutlineColor": "#000000",
+    "TextOutlineSize": 0,
     "BackgroundColor": "#1e2124",
     "BackgroundOpacity": 0,
     "LimitSpeaking": false,
     "SmallAvatars": false,
-    "HideNames": false
+    "HideNames": false,
+    "StreamerAvatarFirst": false
   },
   "Update": {
     "GitHubRepository": "https://github.com/Kenshin9977/Discord-Overlay"
@@ -190,6 +193,23 @@ Les changements d'hôte, de port, de mot de passe et de nom de Browser Source
 prennent effet après un redémarrage de l'app, car la connexion WebSocket OBS
 n'est établie qu'une fois au démarrage. Les options de l'overlay StreamKit, elles,
 sont prises en compte à chaud.
+
+Deux options StreamKit méritent une précision :
+
+- **`BackgroundOpacity`** est une fraction de `0` (transparent) à `1` (opaque)
+  — l'échelle qu'utilise le `bg_opacity` de StreamKit lui-même. Les décimales
+  s'écrivent avec un point : `0.75`. Une valeur supérieure à 1 est relue comme
+  l'ancien pourcentage 0-100, pour qu'un `settings.json` écrit par une version
+  précédente garde le fond qu'il avait.
+- **`StreamerAvatarFirst`** épingle votre propre profil en haut de la pile
+  vocale au lieu de le trier alphabétiquement avec les autres. C'est le
+  « Show My Avatar First » de StreamKit.
+
+Le fichier est prévu pour être édité à la main : les nombres entre guillemets
+(`"0.75"`), les commentaires `//` et les virgules finales sont acceptés. Si une
+édition le rend malgré tout illisible, l'application repart sur les valeurs par
+défaut et conserve votre version à côté sous le nom `settings.invalid.json`
+plutôt que de l'écraser.
 
 ## Dépannage
 
