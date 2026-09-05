@@ -148,13 +148,23 @@ public sealed class TrayApplication : IDisposable
             : tooltip;
     }
 
-    private void OnSettingsClicked(object? sender, RoutedEventArgs e)
+    private void OnSettingsClicked(object? sender, RoutedEventArgs e) => ShowSettings(onOverlayTab: false);
+
+    /// <summary>
+    /// Same window as Settings, opened on the overlay tab. Appearance is the
+    /// thing you reopen to tweak, so it gets its own way in — but not its own
+    /// window, which would mean a second Save with different semantics.
+    /// </summary>
+    private void OnOverlayAppearanceClicked(object? sender, RoutedEventArgs e) => ShowSettings(onOverlayTab: true);
+
+    private void ShowSettings(bool onOverlayTab)
     {
         // A tray app has no owner window to be modal against, and ShowDialog on
         // a repeat click would deadlock behind the first one. Keep a single
         // instance and raise it instead.
         if (settingsWindow is { IsLoaded: true })
         {
+            if (onOverlayTab) settingsWindow.SelectOverlayTab();
             settingsWindow.Activate();
             return;
         }
@@ -179,18 +189,9 @@ public sealed class TrayApplication : IDisposable
             }
         };
 
+        if (onOverlayTab) settingsWindow.SelectOverlayTab();
         settingsWindow.Show();
         settingsWindow.Activate();
-    }
-
-    private void OnOverlayAppearanceClicked(object? sender, RoutedEventArgs e)
-    {
-        // Straight from the tray as well as from Settings: appearance is the
-        // thing you reopen to tweak, and it should not need two clicks through
-        // a dialog about OAuth credentials to reach.
-        var window = new OverlayAppearanceWindow(overlayOptions.CurrentValue, RefreshOverlayAsync);
-        window.Show();
-        window.Activate();
     }
 
     /// <summary>

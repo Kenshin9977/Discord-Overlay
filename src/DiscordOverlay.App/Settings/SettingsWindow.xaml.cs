@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
+using System.Windows.Media;
 using DiscordOverlay.App.Hosting;
 using DiscordOverlay.App.Resources;
 using DiscordOverlay.Core;
@@ -11,6 +13,10 @@ using Wpf.Ui.Controls;
 
 namespace DiscordOverlay.App.Settings;
 
+/// <summary>
+/// Every setting the app has, in one window: connection on one tab, the
+/// StreamKit overlay's own settings on the other, and a single Save for both.
+/// </summary>
 public partial class SettingsWindow : FluentWindow
 {
     private const string DiscordPortalUrl = "https://discord.com/developers/applications";
@@ -19,18 +25,18 @@ public partial class SettingsWindow : FluentWindow
     private readonly IDiscordSession session;
     private readonly AutoStartManager autoStart;
     private readonly ObsConnectionTester obsTester;
-    private readonly Func<StreamKitOverlayOptions> currentOverlay;
     private readonly Func<CancellationToken, Task>? pushOverlayToObs;
 
     private bool openedModally;
 
     /// <param name="currentOverlay">
-    /// Read lazily rather than captured, so the appearance window opens on what
-    /// is in the file now — including a save made since this window opened.
+    /// Read through a delegate rather than passed by value so the window opens
+    /// on what is in the file now, whoever last wrote it.
     /// </param>
     /// <param name="pushOverlayToObs">
-    /// Reload configuration and re-push the overlay URL after an appearance
-    /// save. Null when there is nothing to push to, e.g. during first-run setup.
+    /// Reload configuration and re-push the overlay URL after a save, so an
+    /// appearance change shows up without waiting for the next voice-channel
+    /// change. Null when there is nothing to push to, e.g. at first run.
     /// </param>
     public SettingsWindow(
         IDiscordSession session,
@@ -44,7 +50,6 @@ public partial class SettingsWindow : FluentWindow
         this.session = session;
         this.autoStart = autoStart;
         this.obsTester = obsTester;
-        this.currentOverlay = currentOverlay ?? (static () => new StreamKitOverlayOptions());
         this.pushOverlayToObs = pushOverlayToObs;
 
         InitializeComponent();
@@ -52,6 +57,9 @@ public partial class SettingsWindow : FluentWindow
 
         Title = Strings.SettingsWindowTitle;
         Titlebar.Title = Strings.SettingsWindowTitle;
+
+        ConnectionTab.Header = Strings.SettingsTabConnection;
+        OverlayTab.Header = Strings.SettingsTabOverlay;
 
         DiscordHeader.Text = Strings.SettingsDiscordHeader;
         SignOutButton.Content = Strings.SettingsSignOutButton;
@@ -70,11 +78,31 @@ public partial class SettingsWindow : FluentWindow
         BrowserSourceLabel.Text = Strings.SettingsBrowserSourceLabel;
         ObsTestButton.Content = Strings.WizardObsTestButton;
 
-        OverlayHeader.Text = Strings.SettingsOverlayHeader;
-        OverlayHint.Text = Strings.SettingsOverlayHint;
-
         StartupHeader.Text = Strings.SettingsStartupHeader;
         AutoStartToggle.Content = Strings.SettingsAutoStartCheckbox;
+
+        IntroText.Text = Strings.OverlayIntro;
+        TextHeader.Text = Strings.OverlayTextHeader;
+        BackgroundHeader.Text = Strings.OverlayBackgroundHeader;
+        DisplayHeader.Text = Strings.OverlayDisplayHeader;
+        TextColorLabel.Text = Strings.OverlayTextColorLabel;
+        TextSizeLabel.Text = Strings.OverlayTextSizeLabel;
+        TextOutlineColorLabel.Text = Strings.OverlayTextOutlineColorLabel;
+        TextOutlineSizeLabel.Text = Strings.OverlayTextOutlineSizeLabel;
+        TextShadowColorLabel.Text = Strings.OverlayTextShadowColorLabel;
+        TextShadowSizeLabel.Text = Strings.OverlayTextShadowSizeLabel;
+        BackgroundColorLabel.Text = Strings.OverlayBackgroundColorLabel;
+        BackgroundOpacityLabel.Text = Strings.OverlayBackgroundOpacityLabel;
+        BackgroundShadowColorLabel.Text = Strings.OverlayBackgroundShadowColorLabel;
+        BackgroundShadowSizeLabel.Text = Strings.OverlayBackgroundShadowSizeLabel;
+        TextOutlineSizeHint.Text = Strings.OverlayZeroDisablesHint;
+        TextShadowSizeHint.Text = Strings.OverlayZeroDisablesHint;
+        BackgroundShadowSizeHint.Text = Strings.OverlayZeroDisablesHint;
+        LimitSpeakingToggle.Content = Strings.OverlayLimitSpeakingCheckbox;
+        SmallAvatarsToggle.Content = Strings.OverlaySmallAvatarsCheckbox;
+        HideNamesToggle.Content = Strings.OverlayHideNamesCheckbox;
+        StreamerAvatarFirstToggle.Content = Strings.OverlayStreamerAvatarFirstCheckbox;
+        ResetOverlayButton.Content = Strings.OverlayResetButton;
 
         SaveButton.Content = Strings.SettingsSaveButton;
         CancelButton.Content = Strings.SettingsCancelButton;
@@ -85,6 +113,9 @@ public partial class SettingsWindow : FluentWindow
         SourceNameBox.Text = currentObs.BrowserSourceName;
         AutoStartToggle.IsChecked = autoStart.IsEnabled;
 
+        BackgroundOpacitySlider.ValueChanged += (_, _) => UpdateOpacityReadout();
+        ApplyOverlay((currentOverlay ?? (static () => new StreamKitOverlayOptions()))());
+
         ApplyDiscordState();
     }
 
@@ -93,6 +124,71 @@ public partial class SettingsWindow : FluentWindow
     /// the next launch runs the setup wizard.
     /// </summary>
     public bool SignedOut { get; private set; }
+
+    /// <summary>Open on the overlay tab — what the tray menu's appearance entry wants.</summary>
+    public void SelectOverlayTab() => Tabs.SelectedItem = OverlayTab;
+
+    /// <summary>
+    /// Assigning <see cref="Window.DialogResult"/> throws on a window opened
+    /// with Show rather than ShowDialog, and this one is opened both ways —
+    /// modally at first run, modelessly from the tray. Hiding ShowDialog is how
+    /// it knows which it is without reaching into WPF's internals.
+    /// </summary>
+    public new bool? ShowDialog()
+    {
+        openedModally = true;
+        return base.ShowDialog();
+    }
+
+    private StreamKitOverlayOptions OverlayResult => new()
+    {
+        TextColor = TextColorPicker.Value,
+        TextSize = (int)TextSizeBox.Value.GetValueOrDefault(14),
+        TextOutlineColor = TextOutlineColorPicker.Value,
+        TextOutlineSize = (int)TextOutlineSizeBox.Value.GetValueOrDefault(0),
+        TextShadowColor = TextShadowColorPicker.Value,
+        TextShadowSize = (int)TextShadowSizeBox.Value.GetValueOrDefault(0),
+        BackgroundColor = BackgroundColorPicker.Value,
+        BackgroundOpacity = BackgroundOpacitySlider.Value / 100.0,
+        BackgroundShadowColor = BackgroundShadowColorPicker.Value,
+        BackgroundShadowSize = (int)BackgroundShadowSizeBox.Value.GetValueOrDefault(0),
+        LimitSpeaking = LimitSpeakingToggle.IsChecked ?? false,
+        SmallAvatars = SmallAvatarsToggle.IsChecked ?? false,
+        HideNames = HideNamesToggle.IsChecked ?? false,
+        StreamerAvatarFirst = StreamerAvatarFirstToggle.IsChecked ?? false,
+    };
+
+    private void ApplyOverlay(StreamKitOverlayOptions values)
+    {
+        TextColorPicker.Value = values.TextColor;
+        TextSizeBox.Value = values.TextSize;
+        TextOutlineColorPicker.Value = values.TextOutlineColor;
+        TextOutlineSizeBox.Value = values.TextOutlineSize;
+        TextShadowColorPicker.Value = values.TextShadowColor;
+        TextShadowSizeBox.Value = values.TextShadowSize;
+        BackgroundColorPicker.Value = values.BackgroundColor;
+        BackgroundOpacitySlider.Value = Math.Round(ClampFraction(values.BackgroundOpacity) * 100);
+        BackgroundShadowColorPicker.Value = values.BackgroundShadowColor;
+        BackgroundShadowSizeBox.Value = values.BackgroundShadowSize;
+        LimitSpeakingToggle.IsChecked = values.LimitSpeaking;
+        SmallAvatarsToggle.IsChecked = values.SmallAvatars;
+        HideNamesToggle.IsChecked = values.HideNames;
+        StreamerAvatarFirstToggle.IsChecked = values.StreamerAvatarFirst;
+        UpdateOpacityReadout();
+    }
+
+    private void UpdateOpacityReadout() =>
+        BackgroundOpacityValue.Text = ((int)BackgroundOpacitySlider.Value)
+            .ToString(CultureInfo.CurrentCulture) + " %";
+
+    private static double ClampFraction(double value)
+    {
+        if (double.IsNaN(value)) return 0;
+        // Same legacy 0-100 reading as the URL builder, so an old settings.json
+        // shows the opacity it is actually producing.
+        if (value > 1) value /= 100.0;
+        return Math.Clamp(value, 0, 1);
+    }
 
     private void ApplyDiscordState()
     {
@@ -107,8 +203,9 @@ public partial class SettingsWindow : FluentWindow
             SignedInStatus.Text = Strings.SettingsSignedIn(bundle!.ClientId);
         }
 
-        // OBS fields stay enabled either way so the user can prefill them, but
-        // nothing is persisted until Discord is connected and Save is clicked.
+        // Fields stay enabled either way so the user can prefill them, but
+        // nothing is persisted until Discord is connected and Save is clicked —
+        // first-run setup treats a successful Save as "setup finished".
         SaveButton.IsEnabled = signedIn;
         ObsTestButton.IsEnabled = signedIn;
     }
@@ -133,14 +230,7 @@ public partial class SettingsWindow : FluentWindow
         SetInfo(DiscordInfo, Strings.WizardDiscordRedirectCopied(RedirectUri), InfoBarSeverity.Informational);
     }
 
-    private void OnOverlayAppearanceClick(object sender, RoutedEventArgs e)
-    {
-        // Its own window, and its own save: appearance lands in settings.json
-        // when you click Save there, without waiting on this window's Save,
-        // which is gated on Discord being connected and restarts the app.
-        var window = new OverlayAppearanceWindow(currentOverlay(), pushOverlayToObs) { Owner = this };
-        window.ShowDialog();
-    }
+    private void OnResetOverlayClick(object sender, RoutedEventArgs e) => ApplyOverlay(new StreamKitOverlayOptions());
 
     private async void OnSignInClick(object sender, RoutedEventArgs e)
     {
@@ -246,15 +336,19 @@ public partial class SettingsWindow : FluentWindow
             return;
         }
 
+        SaveButton.IsEnabled = false;
         try
         {
-            var existing = await AppConfigStore.LoadAsync().ConfigureAwait(true);
-            existing.Obs.Hostname = HostBox.Text.Trim();
-            existing.Obs.Port = (int)PortBox.Value.GetValueOrDefault(4455);
-            existing.Obs.Password = PasswordBox.Password;
-            existing.Obs.BrowserSourceName = SourceNameBox.Text.Trim();
+            // Load-then-write, so anything hand-edited that neither tab shows —
+            // the Watcher section, say — survives a save from here.
+            var config = await AppConfigStore.LoadAsync().ConfigureAwait(true);
+            config.Obs.Hostname = HostBox.Text.Trim();
+            config.Obs.Port = (int)PortBox.Value.GetValueOrDefault(4455);
+            config.Obs.Password = PasswordBox.Password;
+            config.Obs.BrowserSourceName = SourceNameBox.Text.Trim();
+            config.Streamkit = OverlayResult;
 
-            await AppConfigStore.SaveAsync(existing).ConfigureAwait(true);
+            await AppConfigStore.SaveAsync(config).ConfigureAwait(true);
 
             try
             {
@@ -270,9 +364,13 @@ public partial class SettingsWindow : FluentWindow
             catch (Exception ex)
             {
                 SetStatus(Strings.SettingsAutoStartFailed(ex.Message), error: true);
+                SaveButton.IsEnabled = true;
                 return;
             }
 
+            // Appearance applies live; host/port/password do not, which is what
+            // the success message says.
+            await TryPushAsync().ConfigureAwait(true);
             SetStatus(Strings.SettingsSaveSuccess, error: false);
 
             await Task.Delay(700).ConfigureAwait(true);
@@ -282,19 +380,22 @@ public partial class SettingsWindow : FluentWindow
         catch (Exception ex)
         {
             SetStatus(Strings.SettingsSaveFailed(ex.Message), error: true);
+            SaveButton.IsEnabled = true;
         }
     }
 
-    /// <summary>
-    /// Assigning <see cref="Window.DialogResult"/> throws on a window opened
-    /// with Show rather than ShowDialog, and this one is opened both ways —
-    /// modally at first run, modelessly from the tray. Hiding ShowDialog is how
-    /// it knows which it is without reaching into WPF's internals.
-    /// </summary>
-    public new bool? ShowDialog()
+    private async Task TryPushAsync()
     {
-        openedModally = true;
-        return base.ShowDialog();
+        if (pushOverlayToObs is null) return;
+        try
+        {
+            await pushOverlayToObs(CancellationToken.None).ConfigureAwait(true);
+        }
+        catch (Exception)
+        {
+            // OBS being unreachable is not a reason to fail the save. The file
+            // is written and the next channel change will carry it.
+        }
     }
 
     private void SetSignInBusy(bool busy)
@@ -315,8 +416,7 @@ public partial class SettingsWindow : FluentWindow
     private void SetStatus(string text, bool error)
     {
         StatusText.Text = text;
-        StatusText.Foreground = error
-            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xed, 0x42, 0x45))
-            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x57, 0xf2, 0x87));
+        StatusText.Foreground = new SolidColorBrush(
+            error ? Color.FromRgb(0xed, 0x42, 0x45) : Color.FromRgb(0x57, 0xf2, 0x87));
     }
 }

@@ -74,6 +74,8 @@ internal static class Strings
 
         // Settings dialog
         ["SettingsWindowTitle"] = "Discord-Overlay - Settings",
+        ["SettingsTabConnection"] = "Connection",
+        ["SettingsTabOverlay"] = "Overlay",
         ["SettingsDiscordHeader"] = "Discord",
         ["SettingsObsHeader"] = "OBS WebSocket",
         ["SettingsStartupHeader"] = "Startup",
@@ -95,13 +97,8 @@ internal static class Strings
         ["SettingsSaveFailed"] = "Save failed: {0}",
         ["SettingsAutoStartFailed"] = "Settings saved, but auto-start could not be updated: {0}",
 
-        // Settings - overlay appearance
-        ["SettingsOverlayHeader"] = "Overlay appearance",
-        ["SettingsOverlayHint"] = "Colors, sizes and what the overlay shows. Applies to the Browser Source straight away.",
-        ["SettingsOverlayButton"] = "Overlay appearance...",
 
-        // Overlay appearance dialog
-        ["OverlayWindowTitle"] = "Discord-Overlay - Overlay appearance",
+        // Overlay appearance tab
         ["OverlayIntro"] = "These are the Discord StreamKit voice widget's own settings. Changes are pushed to your Browser Source as soon as you save.",
         ["OverlayTextHeader"] = "Text",
         ["OverlayBackgroundHeader"] = "Background",
@@ -123,9 +120,6 @@ internal static class Strings
         ["OverlayZeroDisablesHint"] = "0 turns it off",
         ["OverlayResetButton"] = "Reset to defaults",
         ["OverlayPickColorTooltip"] = "Click to pick a color",
-        ["OverlaySaved"] = "Saved and pushed to OBS.",
-        ["OverlaySavedNotPushed"] = "Saved. It will reach OBS on the next channel change.",
-        ["OverlaySaveFailed"] = "Save failed: {0}",
 
         // Tray menu / status
         ["TrayInitialTooltip"] = "Discord-Overlay - starting",
@@ -217,6 +211,8 @@ internal static class Strings
 
         // Paramètres
         ["SettingsWindowTitle"] = "Discord-Overlay - Paramètres",
+        ["SettingsTabConnection"] = "Connexion",
+        ["SettingsTabOverlay"] = "Overlay",
         ["SettingsDiscordHeader"] = "Discord",
         ["SettingsObsHeader"] = "WebSocket OBS",
         ["SettingsStartupHeader"] = "Démarrage",
@@ -238,13 +234,8 @@ internal static class Strings
         ["SettingsSaveFailed"] = "Échec de l'enregistrement : {0}",
         ["SettingsAutoStartFailed"] = "Paramètres enregistrés, mais le démarrage automatique n'a pas pu être mis à jour : {0}",
 
-        // Paramètres - apparence de l'overlay
-        ["SettingsOverlayHeader"] = "Apparence de l'overlay",
-        ["SettingsOverlayHint"] = "Couleurs, tailles et contenu affiché. S'applique immédiatement à la Browser Source.",
-        ["SettingsOverlayButton"] = "Apparence de l'overlay...",
 
-        // Fenêtre d'apparence de l'overlay
-        ["OverlayWindowTitle"] = "Discord-Overlay - Apparence de l'overlay",
+        // Onglet apparence de l'overlay
         ["OverlayIntro"] = "Ce sont les réglages du widget vocal Discord StreamKit lui-même. Les modifications sont envoyées à votre Browser Source dès l'enregistrement.",
         ["OverlayTextHeader"] = "Texte",
         ["OverlayBackgroundHeader"] = "Fond",
@@ -266,9 +257,6 @@ internal static class Strings
         ["OverlayZeroDisablesHint"] = "0 = désactivé",
         ["OverlayResetButton"] = "Valeurs par défaut",
         ["OverlayPickColorTooltip"] = "Cliquez pour choisir une couleur",
-        ["OverlaySaved"] = "Enregistré et envoyé à OBS.",
-        ["OverlaySavedNotPushed"] = "Enregistré. Sera appliqué au prochain changement de salon.",
-        ["OverlaySaveFailed"] = "Échec de l'enregistrement : {0}",
 
         // Barre d'état
         ["TrayInitialTooltip"] = "Discord-Overlay - démarrage",
@@ -359,6 +347,8 @@ internal static class Strings
     public static string DialogClose => Get();
 
     public static string SettingsWindowTitle => Get();
+    public static string SettingsTabConnection => Get();
+    public static string SettingsTabOverlay => Get();
     public static string SettingsDiscordHeader => Get();
     public static string SettingsObsHeader => Get();
     public static string SettingsStartupHeader => Get();
@@ -379,12 +369,8 @@ internal static class Strings
     public static string SettingsSignOutFailed(string message) => Format(nameof(SettingsSignOutFailed), message);
     public static string SettingsSaveFailed(string message) => Format(nameof(SettingsSaveFailed), message);
     public static string SettingsAutoStartFailed(string message) => Format(nameof(SettingsAutoStartFailed), message);
-    public static string SettingsOverlayHeader => Get();
-    public static string SettingsOverlayHint => Get();
-    public static string SettingsOverlayButton => Get();
 
-    // Overlay appearance
-    public static string OverlayWindowTitle => Get();
+    // Overlay appearance tab
     public static string OverlayIntro => Get();
     public static string OverlayTextHeader => Get();
     public static string OverlayBackgroundHeader => Get();
@@ -406,9 +392,6 @@ internal static class Strings
     public static string OverlayZeroDisablesHint => Get();
     public static string OverlayResetButton => Get();
     public static string OverlayPickColorTooltip => Get();
-    public static string OverlaySaved => Get();
-    public static string OverlaySavedNotPushed => Get();
-    public static string OverlaySaveFailed(string message) => Format(nameof(OverlaySaveFailed), message);
 
     // Tray
     public static string TrayInitialTooltip => Get();

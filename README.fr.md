@@ -195,8 +195,9 @@ prennent effet après un redémarrage de l'app, car la connexion WebSocket OBS
 n'est établie qu'une fois au démarrage. Les options de l'overlay StreamKit, elles,
 sont prises en compte à chaud.
 
-Le bloc `Streamkit` a sa propre fenêtre — **Apparence de l'overlay...**,
-directement depuis le menu de la barre d'état ou depuis **Paramètres** — avec un sélecteur pour chaque couleur et un envoi immédiat à
+Le bloc `Streamkit` a son propre onglet dans **Paramètres** — **Overlay** —,
+que l'entrée **Apparence de l'overlay...** du menu de la barre d'état ouvre
+directement — avec un sélecteur pour chaque couleur et un envoi immédiat à
 OBS à l'enregistrement. Elle expose tous les réglages que lit le widget vocal
 StreamKit : rien ne vous oblige à passer par le fichier.
 
@@ -279,7 +280,7 @@ src/
     Controls/                     ColorPickerBox (pastille, hex, popup RVB)
     Hosting/                      Glue du Generic Host, barre d'état,
                                   dispatcher, AutoStartManager, AppUpdater
-    Settings/                     Fenêtre unifiée Paramètres / première config
+    Settings/                     SettingsWindow (onglets Connexion / Overlay)
   DiscordOverlay.Core/            Bibliothèque sans UI
     Auth/                         Flux OAuth, stockage DPAPI, DiscordSession
                                   (avec reconnexion IPC automatique)

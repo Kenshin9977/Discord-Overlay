@@ -2,8 +2,9 @@
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-                 Width="580" Height="760"
-                 MinWidth="520" MinHeight="480"
+                 xmlns:controls="clr-namespace:DiscordOverlay.App.Controls"
+                 Width="600" Height="780"
+                 MinWidth="540" MinHeight="520"
                  WindowStartupLocation="CenterScreen"
                  ExtendsContentIntoTitleBar="True"
                  WindowBackdropType="Mica"
@@ -22,123 +23,267 @@
             </ui:TitleBar.Icon>
         </ui:TitleBar>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20,4,20,0">
-            <StackPanel>
+        <TabControl Grid.Row="1" x:Name="Tabs" Margin="16,4,16,0" Padding="0">
 
-                <!-- Discord -->
-                <ui:Card Margin="{StaticResource SectionMargin}">
+            <!-- ============================ Connection ============================ -->
+            <TabItem x:Name="ConnectionTab">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4,12,12,0">
                     <StackPanel>
-                        <TextBlock x:Name="DiscordHeader" Style="{StaticResource SectionHeader}" />
 
-                        <!-- Exactly one of these is ever visible. -->
-                        <StackPanel x:Name="SignedInPanel" Visibility="Collapsed">
-                            <TextBlock x:Name="SignedInStatus" Style="{StaticResource Hint}" />
-                            <ui:Button x:Name="SignOutButton" Click="OnSignOutClick" HorizontalAlignment="Left" />
-                        </StackPanel>
+                        <ui:Card Margin="{StaticResource SectionMargin}">
+                            <StackPanel>
+                                <TextBlock x:Name="DiscordHeader" Style="{StaticResource SectionHeader}" />
 
-                        <StackPanel x:Name="SignedOutPanel" Visibility="Collapsed">
-                            <TextBlock x:Name="WizardInstructions" Style="{StaticResource Hint}" />
+                                <!-- Exactly one of these is ever visible. -->
+                                <StackPanel x:Name="SignedInPanel" Visibility="Collapsed">
+                                    <TextBlock x:Name="SignedInStatus" Style="{StaticResource Hint}" />
+                                    <ui:Button x:Name="SignOutButton" Click="OnSignOutClick" HorizontalAlignment="Left" />
+                                </StackPanel>
 
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                                <ui:Button x:Name="OpenPortalButton" Click="OnOpenPortalClick"
-                                           Icon="{ui:SymbolIcon Open24}" />
-                                <ui:Button x:Name="CopyRedirectButton" Click="OnCopyRedirectClick"
-                                           Margin="8,0,0,0" Icon="{ui:SymbolIcon Copy24}" />
+                                <StackPanel x:Name="SignedOutPanel" Visibility="Collapsed">
+                                    <TextBlock x:Name="WizardInstructions" Style="{StaticResource Hint}" />
+
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                        <ui:Button x:Name="OpenPortalButton" Click="OnOpenPortalClick"
+                                                   Icon="{ui:SymbolIcon Open24}" />
+                                        <ui:Button x:Name="CopyRedirectButton" Click="OnCopyRedirectClick"
+                                                   Margin="8,0,0,0" Icon="{ui:SymbolIcon Copy24}" />
+                                    </StackPanel>
+
+                                    <Grid Margin="{StaticResource FieldMargin}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="130" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="ClientIdLabel" Style="{StaticResource FieldLabel}" />
+                                        <ui:TextBox x:Name="ClientIdBox" Grid.Column="1" />
+                                    </Grid>
+
+                                    <Grid Margin="{StaticResource FieldMargin}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="130" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="ClientSecretLabel" Style="{StaticResource FieldLabel}" />
+                                        <ui:PasswordBox x:Name="ClientSecretBox" Grid.Column="1" />
+                                    </Grid>
+
+                                    <ui:Button x:Name="SignInButton" Appearance="Primary" Click="OnSignInClick"
+                                               HorizontalAlignment="Left" Margin="0,8,0,0" />
+                                    <ui:InfoBar x:Name="DiscordInfo" Margin="0,12,0,0" IsOpen="False" IsClosable="False" />
+                                </StackPanel>
                             </StackPanel>
+                        </ui:Card>
 
-                            <Grid Margin="{StaticResource FieldMargin}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="130" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock x:Name="ClientIdLabel" Style="{StaticResource FieldLabel}" />
-                                <ui:TextBox x:Name="ClientIdBox" Grid.Column="1" />
-                            </Grid>
+                        <ui:Card Margin="{StaticResource SectionMargin}">
+                            <StackPanel>
+                                <TextBlock x:Name="ObsHeader" Style="{StaticResource SectionHeader}" />
+                                <TextBlock x:Name="ObsHint" Style="{StaticResource Hint}" />
 
-                            <Grid Margin="{StaticResource FieldMargin}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="130" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock x:Name="ClientSecretLabel" Style="{StaticResource FieldLabel}" />
-                                <ui:PasswordBox x:Name="ClientSecretBox" Grid.Column="1" />
-                            </Grid>
+                                <Grid Margin="{StaticResource FieldMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="HostLabel" Style="{StaticResource FieldLabel}" />
+                                    <ui:TextBox x:Name="HostBox" Grid.Column="1" />
+                                </Grid>
 
-                            <ui:Button x:Name="SignInButton" Appearance="Primary" Click="OnSignInClick"
-                                       HorizontalAlignment="Left" Margin="0,8,0,0" />
-                            <ui:InfoBar x:Name="DiscordInfo" Margin="0,12,0,0" IsOpen="False" IsClosable="False" />
-                        </StackPanel>
+                                <Grid Margin="{StaticResource FieldMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="PortLabel" Style="{StaticResource FieldLabel}" />
+                                    <ui:NumberBox x:Name="PortBox" Grid.Column="1" HorizontalAlignment="Left" Width="140"
+                                                  Minimum="1" Maximum="65535" SmallChange="1" ClearButtonEnabled="False" />
+                                </Grid>
+
+                                <Grid Margin="{StaticResource FieldMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="PasswordLabel" Style="{StaticResource FieldLabel}" />
+                                    <ui:PasswordBox x:Name="PasswordBox" Grid.Column="1" />
+                                </Grid>
+
+                                <Grid Margin="{StaticResource FieldMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="BrowserSourceLabel" Style="{StaticResource FieldLabel}" />
+                                    <ui:TextBox x:Name="SourceNameBox" Grid.Column="1" />
+                                </Grid>
+
+                                <ui:Button x:Name="ObsTestButton" Click="OnTestObsClick"
+                                           HorizontalAlignment="Left" Margin="0,8,0,0"
+                                           Icon="{ui:SymbolIcon PlugConnected24}" />
+                                <ui:InfoBar x:Name="ObsInfo" Margin="0,12,0,0" IsOpen="False" IsClosable="False" />
+                            </StackPanel>
+                        </ui:Card>
+
+                        <ui:Card Margin="0,0,0,4">
+                            <StackPanel>
+                                <TextBlock x:Name="StartupHeader" Style="{StaticResource SectionHeader}" />
+                                <ui:ToggleSwitch x:Name="AutoStartToggle" />
+                            </StackPanel>
+                        </ui:Card>
                     </StackPanel>
-                </ui:Card>
+                </ScrollViewer>
+            </TabItem>
 
-                <!-- OBS -->
-                <ui:Card Margin="{StaticResource SectionMargin}">
+            <!-- ============================= Overlay ============================== -->
+            <TabItem x:Name="OverlayTab">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4,12,12,0">
                     <StackPanel>
-                        <TextBlock x:Name="ObsHeader" Style="{StaticResource SectionHeader}" />
-                        <TextBlock x:Name="ObsHint" Style="{StaticResource Hint}" />
+                        <TextBlock x:Name="IntroText" Style="{StaticResource Hint}" />
 
-                        <Grid Margin="{StaticResource FieldMargin}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="130" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="HostLabel" Style="{StaticResource FieldLabel}" />
-                            <ui:TextBox x:Name="HostBox" Grid.Column="1" />
-                        </Grid>
+                        <ui:CardExpander IsExpanded="True" Margin="0,0,0,8">
+                            <ui:CardExpander.Header>
+                                <TextBlock x:Name="TextHeader" Style="{StaticResource SectionHeader}" Margin="0" />
+                            </ui:CardExpander.Header>
+                            <StackPanel>
+                                <Grid Margin="{StaticResource FieldMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="TextColorLabel" Style="{StaticResource FieldLabel}" />
+                                    <controls:ColorPickerBox x:Name="TextColorPicker" Grid.Column="1" />
+                                </Grid>
 
-                        <Grid Margin="{StaticResource FieldMargin}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="130" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="PortLabel" Style="{StaticResource FieldLabel}" />
-                            <ui:NumberBox x:Name="PortBox" Grid.Column="1" HorizontalAlignment="Left" Width="140"
-                                          Minimum="1" Maximum="65535" SmallChange="1" ClearButtonEnabled="False" />
-                        </Grid>
+                                <Grid Margin="{StaticResource FieldMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="TextSizeLabel" Style="{StaticResource FieldLabel}" />
+                                    <ui:NumberBox x:Name="TextSizeBox" Grid.Column="1" Width="120"
+                                                  Minimum="1" Maximum="200" SmallChange="1" ClearButtonEnabled="False" />
+                                </Grid>
 
-                        <Grid Margin="{StaticResource FieldMargin}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="130" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="PasswordLabel" Style="{StaticResource FieldLabel}" />
-                            <ui:PasswordBox x:Name="PasswordBox" Grid.Column="1" />
-                        </Grid>
+                                <Grid Margin="{StaticResource FieldMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="TextOutlineColorLabel" Style="{StaticResource FieldLabel}" />
+                                    <controls:ColorPickerBox x:Name="TextOutlineColorPicker" Grid.Column="1" />
+                                </Grid>
 
-                        <Grid Margin="{StaticResource FieldMargin}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="130" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="BrowserSourceLabel" Style="{StaticResource FieldLabel}" />
-                            <ui:TextBox x:Name="SourceNameBox" Grid.Column="1" />
-                        </Grid>
+                                <Grid Margin="{StaticResource FieldMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="TextOutlineSizeLabel" Style="{StaticResource FieldLabel}" />
+                                    <ui:NumberBox x:Name="TextOutlineSizeBox" Grid.Column="1" Width="120"
+                                                  Minimum="0" Maximum="20" SmallChange="1" ClearButtonEnabled="False" />
+                                    <TextBlock x:Name="TextOutlineSizeHint" Grid.Column="2" Style="{StaticResource InlineHint}" />
+                                </Grid>
 
-                        <ui:Button x:Name="ObsTestButton" Click="OnTestObsClick"
-                                   HorizontalAlignment="Left" Margin="0,8,0,0"
-                                   Icon="{ui:SymbolIcon PlugConnected24}" />
-                        <ui:InfoBar x:Name="ObsInfo" Margin="0,12,0,0" IsOpen="False" IsClosable="False" />
+                                <Grid Margin="{StaticResource FieldMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="TextShadowColorLabel" Style="{StaticResource FieldLabel}" />
+                                    <controls:ColorPickerBox x:Name="TextShadowColorPicker" Grid.Column="1" />
+                                </Grid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="TextShadowSizeLabel" Style="{StaticResource FieldLabel}" />
+                                    <ui:NumberBox x:Name="TextShadowSizeBox" Grid.Column="1" Width="120"
+                                                  Minimum="0" Maximum="20" SmallChange="1" ClearButtonEnabled="False" />
+                                    <TextBlock x:Name="TextShadowSizeHint" Grid.Column="2" Style="{StaticResource InlineHint}" />
+                                </Grid>
+                            </StackPanel>
+                        </ui:CardExpander>
+
+                        <ui:CardExpander IsExpanded="True" Margin="0,0,0,8">
+                            <ui:CardExpander.Header>
+                                <TextBlock x:Name="BackgroundHeader" Style="{StaticResource SectionHeader}" Margin="0" />
+                            </ui:CardExpander.Header>
+                            <StackPanel>
+                                <Grid Margin="{StaticResource FieldMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="BackgroundColorLabel" Style="{StaticResource FieldLabel}" />
+                                    <controls:ColorPickerBox x:Name="BackgroundColorPicker" Grid.Column="1" />
+                                </Grid>
+
+                                <Grid Margin="{StaticResource FieldMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="BackgroundOpacityLabel" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="BackgroundOpacitySlider" Grid.Column="1"
+                                            Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
+                                            VerticalAlignment="Center" />
+                                    <TextBlock x:Name="BackgroundOpacityValue" Grid.Column="2" Width="48"
+                                               TextAlignment="Right" VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Grid Margin="{StaticResource FieldMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="BackgroundShadowColorLabel" Style="{StaticResource FieldLabel}" />
+                                    <controls:ColorPickerBox x:Name="BackgroundShadowColorPicker" Grid.Column="1" />
+                                </Grid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="BackgroundShadowSizeLabel" Style="{StaticResource FieldLabel}" />
+                                    <ui:NumberBox x:Name="BackgroundShadowSizeBox" Grid.Column="1" Width="120"
+                                                  Minimum="0" Maximum="40" SmallChange="1" ClearButtonEnabled="False" />
+                                    <TextBlock x:Name="BackgroundShadowSizeHint" Grid.Column="2" Style="{StaticResource InlineHint}" />
+                                </Grid>
+                            </StackPanel>
+                        </ui:CardExpander>
+
+                        <ui:CardExpander IsExpanded="True" Margin="0,0,0,4">
+                            <ui:CardExpander.Header>
+                                <TextBlock x:Name="DisplayHeader" Style="{StaticResource SectionHeader}" Margin="0" />
+                            </ui:CardExpander.Header>
+                            <StackPanel>
+                                <ui:ToggleSwitch x:Name="LimitSpeakingToggle" Margin="{StaticResource FieldMargin}" />
+                                <ui:ToggleSwitch x:Name="SmallAvatarsToggle" Margin="{StaticResource FieldMargin}" />
+                                <ui:ToggleSwitch x:Name="HideNamesToggle" Margin="{StaticResource FieldMargin}" />
+                                <ui:ToggleSwitch x:Name="StreamerAvatarFirstToggle" />
+                            </StackPanel>
+                        </ui:CardExpander>
+
+                        <ui:Button x:Name="ResetOverlayButton" Click="OnResetOverlayClick"
+                                   HorizontalAlignment="Left" Margin="0,12,0,0"
+                                   Icon="{ui:SymbolIcon ArrowReset24}" />
                     </StackPanel>
-                </ui:Card>
-
-                <!-- Overlay appearance -->
-                <ui:CardAction x:Name="OverlayCard" Click="OnOverlayAppearanceClick"
-                               Icon="{ui:SymbolIcon Color24}" Margin="{StaticResource SectionMargin}">
-                    <StackPanel>
-                        <TextBlock x:Name="OverlayHeader" FontWeight="SemiBold" />
-                        <TextBlock x:Name="OverlayHint" TextWrapping="Wrap" Opacity="0.65" Margin="0,4,0,0" />
-                    </StackPanel>
-                </ui:CardAction>
-
-                <!-- Startup -->
-                <ui:Card Margin="0,0,0,4">
-                    <StackPanel>
-                        <TextBlock x:Name="StartupHeader" Style="{StaticResource SectionHeader}" />
-                        <ui:ToggleSwitch x:Name="AutoStartToggle" />
-                    </StackPanel>
-                </ui:Card>
-            </StackPanel>
-        </ScrollViewer>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
 
         <Border Grid.Row="2" Padding="20,12,20,20">
             <Grid>
@@ -149,7 +294,7 @@
 
                 <TextBlock x:Name="StatusText" Grid.Column="0"
                            VerticalAlignment="Center" Margin="0,0,12,0"
-                           TextTrimming="CharacterEllipsis" />
+                           TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <ui:Button x:Name="SaveButton" Appearance="Primary" Click="OnSaveClick" MinWidth="96" />

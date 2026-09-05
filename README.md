@@ -187,8 +187,8 @@ Host, port, password and Browser Source name changes take effect after an
 app restart since the OBS WebSocket connection is established once at
 startup. StreamKit overlay options pick up live.
 
-The `Streamkit` block has a window of its own — **Overlay appearance...**,
-straight from the tray menu or from **Settings** — with a colour picker on each colour and a live push to OBS
+The `Streamkit` block has its own tab in **Settings** — **Overlay** — which
+the tray menu's **Overlay appearance...** entry opens directly — with a colour picker on each colour and a live push to OBS
 when you save. It carries every setting the StreamKit voice widget reads, so
 there is nothing you have to drop to the file for.
 
@@ -265,7 +265,7 @@ src/
     Controls/                     ColorPickerBox (swatch, hex, RGB popup)
     Hosting/                      Generic Host glue, tray, dispatcher,
                                   AutoStartManager, AppUpdater
-    Settings/                     SettingsWindow / OverlayAppearanceWindow
+    Settings/                     SettingsWindow (Connection / Overlay tabs)
   DiscordOverlay.Core/            UI-free library
     Auth/                         OAuth flow, DPAPI store, DiscordSession
                                   (with IPC auto-reconnect)
