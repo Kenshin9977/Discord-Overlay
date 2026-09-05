@@ -41,6 +41,17 @@ public sealed class ObsBrowserSourceUpdater : BackgroundService
 
     public ConnectionState ConnectionState => (ConnectionState)connectionStateRaw;
 
+    /// <summary>
+    /// Re-push the current channel's URL now.
+    ///
+    /// The overlay options are read fresh on every build, but nothing re-pushes
+    /// between voice-channel changes — so without this a saved appearance change
+    /// would sit unapplied until the user next moved rooms, which reads exactly
+    /// like the setting not working.
+    /// </summary>
+    public Task RefreshAsync(CancellationToken cancellationToken = default) =>
+        PushIfChannelKnownAsync(cancellationToken);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         watcher.Changed += OnVoiceChannelChanged;

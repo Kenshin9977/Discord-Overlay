@@ -30,12 +30,14 @@ public class StreamKitUrlBuilderTests
         var url = sut.Build(info)!;
 
         Assert.StartsWith("https://streamkit.discord.com/overlay/voice/999888777/111222333?", url);
-        Assert.Contains("icon=true", url);
-        Assert.Contains("online=true", url);
-        Assert.Contains("logo=white", url);
         Assert.Contains("text_color=%23ffffff", url);
         Assert.Contains("text_size=14", url);
+        Assert.Contains("text_outline_size=0", url);
+        Assert.Contains("text_shadow_color=%23000000", url);
+        Assert.Contains("text_shadow_size=0", url);
         Assert.Contains("bg_opacity=0&", url);
+        Assert.Contains("bg_shadow_color=%23000000", url);
+        Assert.Contains("bg_shadow_size=0", url);
         Assert.Contains("limit_speaking=false", url);
         Assert.Contains("small_avatars=false", url);
         Assert.Contains("hide_names=false", url);
@@ -43,14 +45,41 @@ public class StreamKitUrlBuilderTests
     }
 
     [Fact]
+    public void Build_EmitsExactlyTheParametersTheVoiceWidgetReads()
+    {
+        // The voice widget's own settings object is the contract. icon, online
+        // and logo belong to the status widget and are ignored here — sending
+        // them is what made them look like settings that did not work.
+        var sut = BuildSut(new StreamKitOverlayOptions());
+        var info = new DiscordVoiceChannelInfo { ChannelId = "C", GuildId = "G" };
+
+        var query = sut.Build(info)!.Split('?')[1].Split('&')
+            .Select(pair => pair.Split('=')[0])
+            .ToArray();
+
+        Assert.Equal(
+            [
+                "text_color", "text_size",
+                "text_outline_color", "text_outline_size",
+                "text_shadow_color", "text_shadow_size",
+                "bg_color", "bg_opacity",
+                "bg_shadow_color", "bg_shadow_size",
+                "limit_speaking", "small_avatars", "hide_names", "streamer_avatar_first",
+            ],
+            query);
+    }
+
+    [Fact]
     public void Build_RespectsOptionOverrides()
     {
         var sut = BuildSut(new StreamKitOverlayOptions
         {
-            ShowIcon = false,
-            OnlineOnly = false,
             TextSize = 18,
+            TextShadowColor = "#ff0000",
+            TextShadowSize = 3,
             BackgroundOpacity = 0.5,
+            BackgroundShadowColor = "#00ff00",
+            BackgroundShadowSize = 6,
             LimitSpeaking = true,
             HideNames = true,
             StreamerAvatarFirst = true,
@@ -59,10 +88,12 @@ public class StreamKitUrlBuilderTests
 
         var url = sut.Build(info)!;
 
-        Assert.Contains("icon=false", url);
-        Assert.Contains("online=false", url);
         Assert.Contains("text_size=18", url);
+        Assert.Contains("text_shadow_color=%23ff0000", url);
+        Assert.Contains("text_shadow_size=3", url);
         Assert.Contains("bg_opacity=0.5", url);
+        Assert.Contains("bg_shadow_color=%2300ff00", url);
+        Assert.Contains("bg_shadow_size=6", url);
         Assert.Contains("limit_speaking=true", url);
         Assert.Contains("hide_names=true", url);
         Assert.Contains("streamer_avatar_first=true", url);

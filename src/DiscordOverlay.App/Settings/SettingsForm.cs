@@ -16,6 +16,8 @@ public sealed class SettingsForm : Form
     private readonly IDiscordSession session;
     private readonly AutoStartManager autoStart;
     private readonly ObsConnectionTester obsTester;
+    private readonly Func<StreamKitOverlayOptions> currentOverlay;
+    private readonly Func<CancellationToken, Task>? pushOverlayToObs;
 
     private readonly GroupBox discordGroup;
     private readonly Panel signedInPanel;
@@ -39,15 +41,27 @@ public sealed class SettingsForm : Form
     private readonly Button saveButton;
     private readonly Label statusLabel;
 
+    /// <param name="currentOverlay">
+    /// Read lazily rather than captured, so the appearance dialog opens on what
+    /// is in the file now — including a save made since this form opened.
+    /// </param>
+    /// <param name="pushOverlayToObs">
+    /// Reload configuration and re-push the overlay URL after an appearance
+    /// save. Null when there is nothing to push to, e.g. during first-run setup.
+    /// </param>
     public SettingsForm(
         IDiscordSession session,
         ObsConnectionOptions currentObs,
         AutoStartManager autoStart,
-        ObsConnectionTester obsTester)
+        ObsConnectionTester obsTester,
+        Func<StreamKitOverlayOptions>? currentOverlay = null,
+        Func<CancellationToken, Task>? pushOverlayToObs = null)
     {
         this.session = session;
         this.autoStart = autoStart;
         this.obsTester = obsTester;
+        this.currentOverlay = currentOverlay ?? (static () => new StreamKitOverlayOptions());
+        this.pushOverlayToObs = pushOverlayToObs;
 
         Text = Strings.SettingsWindowTitle;
         StartPosition = FormStartPosition.CenterScreen;
@@ -294,6 +308,30 @@ public sealed class SettingsForm : Form
             obsTestButton, obsStatus,
         });
 
+        var overlayGroup = new GroupBox
+        {
+            Text = Strings.SettingsOverlayHeader,
+            Dock = DockStyle.Fill,
+            Size = new Size(548, 84),
+        };
+        var overlayHint = new Label
+        {
+            AutoSize = false,
+            Size = new Size(528, 32),
+            Location = new Point(10, 18),
+            ForeColor = SystemColors.GrayText,
+            Text = Strings.SettingsOverlayHint,
+        };
+        var overlayButton = new Button
+        {
+            Text = Strings.SettingsOverlayButton,
+            Location = new Point(10, 50),
+            AutoSize = true,
+            Padding = new Padding(12, 4, 12, 4),
+        };
+        overlayButton.Click += (_, _) => OnOverlayAppearanceClicked();
+        overlayGroup.Controls.AddRange(new Control[] { overlayHint, overlayButton });
+
         var startupGroup = new GroupBox
         {
             Text = Strings.SettingsStartupHeader,
@@ -357,7 +395,7 @@ public sealed class SettingsForm : Form
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
-            RowCount = 5,
+            RowCount = 6,
             Padding = new Padding(12, 8, 12, 12),
         };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
@@ -368,9 +406,10 @@ public sealed class SettingsForm : Form
 
         root.Controls.Add(discordGroup, 0, 0);
         root.Controls.Add(obsGroup, 0, 1);
-        root.Controls.Add(startupGroup, 0, 2);
-        root.Controls.Add(statusLabel, 0, 3);
-        root.Controls.Add(buttonRow, 0, 4);
+        root.Controls.Add(overlayGroup, 0, 2);
+        root.Controls.Add(startupGroup, 0, 3);
+        root.Controls.Add(statusLabel, 0, 4);
+        root.Controls.Add(buttonRow, 0, 5);
 
         Controls.Add(root);
 
@@ -400,6 +439,15 @@ public sealed class SettingsForm : Form
             // user clicks Save.
             hostBox.Enabled = portBox.Enabled = passwordBox.Enabled = sourceNameBox.Enabled = true;
         }
+    }
+
+    private void OnOverlayAppearanceClicked()
+    {
+        // Its own dialog, and its own save: appearance lands in settings.json
+        // the moment you click Save there, without waiting on this form's Save,
+        // which is gated on Discord being connected and also restarts the app.
+        using var form = new OverlayAppearanceForm(currentOverlay(), pushOverlayToObs);
+        form.ShowDialog(this);
     }
 
     private static void OpenInBrowser(string url)

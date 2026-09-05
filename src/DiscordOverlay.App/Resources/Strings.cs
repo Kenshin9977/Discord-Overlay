@@ -92,6 +92,38 @@ internal static class Strings
         ["SettingsSaveFailed"] = "Save failed: {0}",
         ["SettingsAutoStartFailed"] = "Settings saved, but auto-start could not be updated: {0}",
 
+        // Settings - overlay appearance
+        ["SettingsOverlayHeader"] = "Overlay appearance",
+        ["SettingsOverlayHint"] = "Colors, sizes and what the overlay shows. Applies to the Browser Source straight away.",
+        ["SettingsOverlayButton"] = "Overlay appearance...",
+
+        // Overlay appearance dialog
+        ["OverlayWindowTitle"] = "Discord-Overlay - Overlay appearance",
+        ["OverlayIntro"] = "These are the Discord StreamKit voice widget's own settings. Changes are pushed to your Browser Source as soon as you save.",
+        ["OverlayTextHeader"] = "Text",
+        ["OverlayBackgroundHeader"] = "Background",
+        ["OverlayDisplayHeader"] = "What to show",
+        ["OverlayTextColorLabel"] = "Color:",
+        ["OverlayTextSizeLabel"] = "Size:",
+        ["OverlayTextOutlineColorLabel"] = "Outline color:",
+        ["OverlayTextOutlineSizeLabel"] = "Outline size:",
+        ["OverlayTextShadowColorLabel"] = "Shadow color:",
+        ["OverlayTextShadowSizeLabel"] = "Shadow size:",
+        ["OverlayBackgroundColorLabel"] = "Color:",
+        ["OverlayBackgroundOpacityLabel"] = "Opacity:",
+        ["OverlayBackgroundShadowColorLabel"] = "Shadow color:",
+        ["OverlayBackgroundShadowSizeLabel"] = "Shadow size:",
+        ["OverlayLimitSpeakingCheckbox"] = "Only show people who are speaking",
+        ["OverlaySmallAvatarsCheckbox"] = "Small avatars",
+        ["OverlayHideNamesCheckbox"] = "Hide names",
+        ["OverlayStreamerAvatarFirstCheckbox"] = "Pin my own profile to the top",
+        ["OverlayZeroDisablesHint"] = "0 turns it off",
+        ["OverlayResetButton"] = "Reset to defaults",
+        ["OverlayPickColorTooltip"] = "Click to pick a color",
+        ["OverlaySaved"] = "Saved and pushed to OBS.",
+        ["OverlaySavedNotPushed"] = "Saved. It will reach OBS on the next channel change.",
+        ["OverlaySaveFailed"] = "Save failed: {0}",
+
         // Tray menu / status
         ["TrayInitialTooltip"] = "Discord-Overlay - starting",
         ["TrayChannelStarting"] = "Channel: starting",
@@ -202,6 +234,38 @@ internal static class Strings
         ["SettingsSaveFailed"] = "Échec de l'enregistrement : {0}",
         ["SettingsAutoStartFailed"] = "Paramètres enregistrés, mais le démarrage automatique n'a pas pu être mis à jour : {0}",
 
+        // Paramètres - apparence de l'overlay
+        ["SettingsOverlayHeader"] = "Apparence de l'overlay",
+        ["SettingsOverlayHint"] = "Couleurs, tailles et contenu affiché. S'applique immédiatement à la Browser Source.",
+        ["SettingsOverlayButton"] = "Apparence de l'overlay...",
+
+        // Fenêtre d'apparence de l'overlay
+        ["OverlayWindowTitle"] = "Discord-Overlay - Apparence de l'overlay",
+        ["OverlayIntro"] = "Ce sont les réglages du widget vocal Discord StreamKit lui-même. Les modifications sont envoyées à votre Browser Source dès l'enregistrement.",
+        ["OverlayTextHeader"] = "Texte",
+        ["OverlayBackgroundHeader"] = "Fond",
+        ["OverlayDisplayHeader"] = "Affichage",
+        ["OverlayTextColorLabel"] = "Couleur :",
+        ["OverlayTextSizeLabel"] = "Taille :",
+        ["OverlayTextOutlineColorLabel"] = "Couleur du contour :",
+        ["OverlayTextOutlineSizeLabel"] = "Épaisseur du contour :",
+        ["OverlayTextShadowColorLabel"] = "Couleur de l'ombre :",
+        ["OverlayTextShadowSizeLabel"] = "Taille de l'ombre :",
+        ["OverlayBackgroundColorLabel"] = "Couleur :",
+        ["OverlayBackgroundOpacityLabel"] = "Opacité :",
+        ["OverlayBackgroundShadowColorLabel"] = "Couleur de l'ombre :",
+        ["OverlayBackgroundShadowSizeLabel"] = "Taille de l'ombre :",
+        ["OverlayLimitSpeakingCheckbox"] = "N'afficher que les personnes qui parlent",
+        ["OverlaySmallAvatarsCheckbox"] = "Petits avatars",
+        ["OverlayHideNamesCheckbox"] = "Masquer les pseudos",
+        ["OverlayStreamerAvatarFirstCheckbox"] = "Épingler mon profil en haut",
+        ["OverlayZeroDisablesHint"] = "0 = désactivé",
+        ["OverlayResetButton"] = "Valeurs par défaut",
+        ["OverlayPickColorTooltip"] = "Cliquez pour choisir une couleur",
+        ["OverlaySaved"] = "Enregistré et envoyé à OBS.",
+        ["OverlaySavedNotPushed"] = "Enregistré. Sera appliqué au prochain changement de salon.",
+        ["OverlaySaveFailed"] = "Échec de l'enregistrement : {0}",
+
         // Barre d'état
         ["TrayInitialTooltip"] = "Discord-Overlay - démarrage",
         ["TrayChannelStarting"] = "Salon : démarrage",
@@ -305,6 +369,36 @@ internal static class Strings
     public static string SettingsSignOutFailed(string message) => Format(nameof(SettingsSignOutFailed), message);
     public static string SettingsSaveFailed(string message) => Format(nameof(SettingsSaveFailed), message);
     public static string SettingsAutoStartFailed(string message) => Format(nameof(SettingsAutoStartFailed), message);
+    public static string SettingsOverlayHeader => Get();
+    public static string SettingsOverlayHint => Get();
+    public static string SettingsOverlayButton => Get();
+
+    // Overlay appearance
+    public static string OverlayWindowTitle => Get();
+    public static string OverlayIntro => Get();
+    public static string OverlayTextHeader => Get();
+    public static string OverlayBackgroundHeader => Get();
+    public static string OverlayDisplayHeader => Get();
+    public static string OverlayTextColorLabel => Get();
+    public static string OverlayTextSizeLabel => Get();
+    public static string OverlayTextOutlineColorLabel => Get();
+    public static string OverlayTextOutlineSizeLabel => Get();
+    public static string OverlayTextShadowColorLabel => Get();
+    public static string OverlayTextShadowSizeLabel => Get();
+    public static string OverlayBackgroundColorLabel => Get();
+    public static string OverlayBackgroundOpacityLabel => Get();
+    public static string OverlayBackgroundShadowColorLabel => Get();
+    public static string OverlayBackgroundShadowSizeLabel => Get();
+    public static string OverlayLimitSpeakingCheckbox => Get();
+    public static string OverlaySmallAvatarsCheckbox => Get();
+    public static string OverlayHideNamesCheckbox => Get();
+    public static string OverlayStreamerAvatarFirstCheckbox => Get();
+    public static string OverlayZeroDisablesHint => Get();
+    public static string OverlayResetButton => Get();
+    public static string OverlayPickColorTooltip => Get();
+    public static string OverlaySaved => Get();
+    public static string OverlaySavedNotPushed => Get();
+    public static string OverlaySaveFailed(string message) => Format(nameof(OverlaySaveFailed), message);
 
     // Tray
     public static string TrayInitialTooltip => Get();

@@ -162,15 +162,16 @@ Schema:
     "RefreshTimeout": "00:00:05"
   },
   "Streamkit": {
-    "ShowIcon": true,
-    "OnlineOnly": true,
-    "Logo": "white",
     "TextColor": "#ffffff",
     "TextSize": 14,
     "TextOutlineColor": "#000000",
     "TextOutlineSize": 0,
+    "TextShadowColor": "#000000",
+    "TextShadowSize": 0,
     "BackgroundColor": "#1e2124",
     "BackgroundOpacity": 0,
+    "BackgroundShadowColor": "#000000",
+    "BackgroundShadowSize": 0,
     "LimitSpeaking": false,
     "SmallAvatars": false,
     "HideNames": false,
@@ -186,20 +187,27 @@ Host, port, password and Browser Source name changes take effect after an
 app restart since the OBS WebSocket connection is established once at
 startup. StreamKit overlay options pick up live.
 
-A few of the StreamKit options are worth spelling out:
+The `Streamkit` block has a dialog of its own — **Settings**, then **Overlay
+appearance...** — with a colour picker on each colour and a live push to OBS
+when you save. It carries every setting the StreamKit voice widget reads, so
+there is nothing you have to drop to the file for.
+
+Two notes for anyone editing the file directly:
 
 - **`BackgroundOpacity`** is a fraction from `0` (transparent) to `1` (opaque)
   — the scale StreamKit's own `bg_opacity` uses. Decimals use a dot: `0.75`.
   A value above 1 is read as the old 0-100 percentage, so a `settings.json`
-  written by an earlier version keeps the background it had.
-- **`StreamerAvatarFirst`** pins your own profile to the top of the voice
-  stack instead of sorting it in alphabetically. It is StreamKit's "Show My
-  Avatar First".
+  written by an earlier version keeps the background it had. (The dialog shows
+  it as a percentage, which is the friendlier form on screen.)
+- **`ShowIcon`, `OnlineOnly` and `Logo` are gone.** They were sent as `icon`,
+  `online` and `logo`, which belong to StreamKit's *status* widget; the voice
+  widget never read them, so they were three settings that could not do
+  anything. Leaving them in your file is harmless — they are ignored.
 
-The file is meant to be hand-editable, so quoted numbers (`"0.75"`), `//`
-comments and trailing commas are all accepted. If an edit does leave it
-unparseable, the app falls back to defaults and keeps your version as
-`settings.invalid.json` next to it rather than overwriting it.
+The file stays hand-editable, so quoted numbers (`"0.75"`), `//` comments and
+trailing commas are all accepted. If an edit does leave it unparseable, the app
+falls back to defaults and keeps your version as `settings.invalid.json` next
+to it rather than overwriting it.
 
 ## Troubleshooting
 

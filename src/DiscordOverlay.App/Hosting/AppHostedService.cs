@@ -13,6 +13,7 @@ public sealed class AppHostedService(
     IDiscordSession session,
     ObsConnectionTester obsTester,
     IOptionsMonitor<ObsConnectionOptions> obsOptions,
+    IOptionsMonitor<StreamKitOverlayOptions> overlayOptions,
     AutoStartManager autoStart,
     IUiDispatcher uiDispatcher,
     IHostApplicationLifetime lifetime,
@@ -66,7 +67,15 @@ public sealed class AppHostedService(
 
         var result = await uiDispatcher.InvokeAsync(() =>
         {
-            using var form = new SettingsForm(session, obsOptions.CurrentValue, autoStart, obsTester);
+            // No push callback here: OBS is not configured yet at first run, so
+            // an appearance change can only land in the file and be carried by
+            // the first push after setup.
+            using var form = new SettingsForm(
+                session,
+                obsOptions.CurrentValue,
+                autoStart,
+                obsTester,
+                () => overlayOptions.CurrentValue);
             return form.ShowDialog();
         }).ConfigureAwait(false);
 

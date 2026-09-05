@@ -1,20 +1,26 @@
 namespace DiscordOverlay.Core.Streaming;
 
+/// <summary>
+/// The StreamKit voice widget's settings, one property per query parameter it
+/// actually reads. The widget's own defaults object is the reference; anything
+/// not in it (icon, online, logo — those belong to the <c>status</c> widget) is
+/// ignored no matter what we send, so it does not belong here.
+/// </summary>
 public sealed class StreamKitOverlayOptions
 {
-    public bool ShowIcon { get; set; } = true;
-
-    public bool OnlineOnly { get; set; } = true;
-
-    public string Logo { get; set; } = "white";
-
     public string TextColor { get; set; } = "#ffffff";
 
     public int TextSize { get; set; } = 14;
 
+    /// <summary>Outline drawn around the text, as CSS <c>-webkit-text-stroke</c>. 0 disables it.</summary>
     public string TextOutlineColor { get; set; } = "#000000";
 
     public int TextOutlineSize { get; set; } = 0;
+
+    /// <summary>Drop shadow behind the text, as CSS <c>text-shadow</c>. 0 disables it.</summary>
+    public string TextShadowColor { get; set; } = "#000000";
+
+    public int TextShadowSize { get; set; } = 0;
 
     public string BackgroundColor { get; set; } = "#1e2124";
 
@@ -31,6 +37,12 @@ public sealed class StreamKitOverlayOptions
     /// </remarks>
     public double BackgroundOpacity { get; set; } = 0;
 
+    /// <summary>Drop shadow behind each entry's box, as CSS <c>box-shadow</c>. 0 disables it.</summary>
+    public string BackgroundShadowColor { get; set; } = "#000000";
+
+    public int BackgroundShadowSize { get; set; } = 0;
+
+    /// <summary>Show only the people currently speaking.</summary>
     public bool LimitSpeaking { get; set; } = false;
 
     public bool SmallAvatars { get; set; } = false;

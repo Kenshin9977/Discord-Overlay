@@ -3,6 +3,7 @@ using DiscordOverlay.App.Settings;
 using DiscordOverlay.Core.Auth;
 using DiscordOverlay.Core.Discord;
 using DiscordOverlay.Core.Streaming;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -22,6 +23,8 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly ObsConnectionTester obsTester;
     private readonly IDiscordSession session;
     private readonly IOptionsMonitor<ObsConnectionOptions> obsOptions;
+    private readonly IOptionsMonitor<StreamKitOverlayOptions> overlayOptions;
+    private readonly IConfiguration configuration;
     private readonly AutoStartManager autoStart;
     private readonly AppUpdater updater;
 
@@ -38,6 +41,8 @@ public sealed class TrayApplicationContext : ApplicationContext
         ObsConnectionTester obsTester,
         IDiscordSession session,
         IOptionsMonitor<ObsConnectionOptions> obsOptions,
+        IOptionsMonitor<StreamKitOverlayOptions> overlayOptions,
+        IConfiguration configuration,
         AutoStartManager autoStart,
         AppUpdater updater)
     {
@@ -48,6 +53,8 @@ public sealed class TrayApplicationContext : ApplicationContext
         this.obsTester = obsTester;
         this.session = session;
         this.obsOptions = obsOptions;
+        this.overlayOptions = overlayOptions;
+        this.configuration = configuration;
         this.autoStart = autoStart;
         this.updater = updater;
 
@@ -125,7 +132,13 @@ public sealed class TrayApplicationContext : ApplicationContext
 
     private void OnSettingsClicked(object? sender, EventArgs e)
     {
-        using var form = new SettingsForm(session, obsOptions.CurrentValue, autoStart, obsTester);
+        using var form = new SettingsForm(
+            session,
+            obsOptions.CurrentValue,
+            autoStart,
+            obsTester,
+            () => overlayOptions.CurrentValue,
+            RefreshOverlayAsync);
         var result = form.ShowDialog();
         if (result == DialogResult.Abort)
         {
@@ -133,6 +146,17 @@ public sealed class TrayApplicationContext : ApplicationContext
             logger.LogInformation("Sign-out from settings; exiting application");
             lifetime.StopApplication();
         }
+    }
+
+    /// <summary>
+    /// Pick up an appearance change and push it. The reload is not optional:
+    /// settings.json is watched, but that watch is asynchronous, so re-pushing
+    /// straight after a save would otherwise send the values it just replaced.
+    /// </summary>
+    private async Task RefreshOverlayAsync(CancellationToken cancellationToken)
+    {
+        (configuration as IConfigurationRoot)?.Reload();
+        await obsUpdater.RefreshAsync(cancellationToken).ConfigureAwait(true);
     }
 
     private void OnOpenLogFolderClicked(object? sender, EventArgs e)

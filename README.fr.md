@@ -169,15 +169,16 @@ l'écrit ; vous pouvez l'éditer à la main si vous voulez). Schéma :
     "RefreshTimeout": "00:00:05"
   },
   "Streamkit": {
-    "ShowIcon": true,
-    "OnlineOnly": true,
-    "Logo": "white",
     "TextColor": "#ffffff",
     "TextSize": 14,
     "TextOutlineColor": "#000000",
     "TextOutlineSize": 0,
+    "TextShadowColor": "#000000",
+    "TextShadowSize": 0,
     "BackgroundColor": "#1e2124",
     "BackgroundOpacity": 0,
+    "BackgroundShadowColor": "#000000",
+    "BackgroundShadowSize": 0,
     "LimitSpeaking": false,
     "SmallAvatars": false,
     "HideNames": false,
@@ -194,22 +195,30 @@ prennent effet après un redémarrage de l'app, car la connexion WebSocket OBS
 n'est établie qu'une fois au démarrage. Les options de l'overlay StreamKit, elles,
 sont prises en compte à chaud.
 
-Deux options StreamKit méritent une précision :
+Le bloc `Streamkit` a sa propre fenêtre — **Paramètres**, puis **Apparence de
+l'overlay...** — avec un sélecteur pour chaque couleur et un envoi immédiat à
+OBS à l'enregistrement. Elle expose tous les réglages que lit le widget vocal
+StreamKit : rien ne vous oblige à passer par le fichier.
+
+Deux précisions pour qui édite quand même le fichier :
 
 - **`BackgroundOpacity`** est une fraction de `0` (transparent) à `1` (opaque)
   — l'échelle qu'utilise le `bg_opacity` de StreamKit lui-même. Les décimales
   s'écrivent avec un point : `0.75`. Une valeur supérieure à 1 est relue comme
   l'ancien pourcentage 0-100, pour qu'un `settings.json` écrit par une version
-  précédente garde le fond qu'il avait.
-- **`StreamerAvatarFirst`** épingle votre propre profil en haut de la pile
-  vocale au lieu de le trier alphabétiquement avec les autres. C'est le
-  « Show My Avatar First » de StreamKit.
+  précédente garde le fond qu'il avait. (La fenêtre l'affiche en pourcentage,
+  plus lisible à l'écran.)
+- **`ShowIcon`, `OnlineOnly` et `Logo` ont disparu.** Ils étaient envoyés en
+  `icon`, `online` et `logo`, qui appartiennent au widget *status* de
+  StreamKit ; le widget vocal ne les a jamais lus, c'étaient donc trois
+  réglages incapables d'avoir le moindre effet. Les laisser dans votre fichier
+  ne pose pas de problème : ils sont ignorés.
 
-Le fichier est prévu pour être édité à la main : les nombres entre guillemets
-(`"0.75"`), les commentaires `//` et les virgules finales sont acceptés. Si une
-édition le rend malgré tout illisible, l'application repart sur les valeurs par
-défaut et conserve votre version à côté sous le nom `settings.invalid.json`
-plutôt que de l'écraser.
+Le fichier reste éditable à la main : les nombres entre guillemets (`"0.75"`),
+les commentaires `//` et les virgules finales sont acceptés. Si une édition le
+rend malgré tout illisible, l'application repart sur les valeurs par défaut et
+conserve votre version à côté sous le nom `settings.invalid.json` plutôt que de
+l'écraser.
 
 ## Dépannage
 
