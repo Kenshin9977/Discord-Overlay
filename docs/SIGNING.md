@@ -36,8 +36,7 @@ Signing is **opt‑in and non‑breaking**: with no signing secrets,
 | --- | --- |
 | `build/sign-remote.sh` | Runs in CI. SSHes one binary to the VPS, gets it back signed. |
 | `build/vps/sign-stdin.sh` | Runs on the VPS as the SSH forced command. |
-| `build/vps/install-signer.sh` | Builds and installs `ssign` + the signer on the VPS. Idempotent. |
-| `build/vps/ssign-authenticode-timestamp-oid.patch` | The `ssign` fix we carry (below), and the diff to send upstream. |
+| `build/vps/install-signer.sh` | Builds and installs `ssign` + the signer on the VPS. Idempotent. Pins the upstream commit. |
 
 ## GitHub Actions secrets
 
@@ -68,12 +67,18 @@ single-author project sitting on the path to the signing key. A pinned SHA
 cannot be swapped out by a force-push — the build breaks instead of silently
 changing. Re-read the diff before moving the pin.
 
-## The two traps (both cost a lot to find — do not re-introduce them)
+Currently pinned to **v0.1.5** (`dbe6751`). Both Authenticode bugs below were
+carried here as local patches against the previous pin and are fixed upstream
+as of that release, so `install-signer.sh` no longer patches anything — it
+asserts both fixes are present in the checkout and refuses to build if either
+is missing.
+
+## The three traps (all cost a lot to find — do not re-introduce them)
 
 ### 1. The timestamp OID
 
-`ssign` 0.1.1 embeds the RFC3161 token under the **generic CMS** OID
-`1.2.840.113549.1.9.16.2.14`. Authenticode does not read that attribute —
+`ssign` before v0.1.2 embedded the RFC3161 token under the **generic CMS**
+OID `1.2.840.113549.1.9.16.2.14`. Authenticode does not read that attribute —
 Windows requires `1.3.6.1.4.1.311.3.3.1`.
 
 It fails **silently**: `ssign` reports success, the TSA really is contacted,
@@ -81,8 +86,9 @@ the token really is in the file, and Windows reports *no timestamp at all*.
 The signature is valid today and goes **invalid the moment the certificate
 expires (2027‑05‑17)** — including on binaries already shipped to users.
 
-`install-signer.sh` corrects the OID as a checked substitution, asserted
-before and after, so it cannot fail quietly.
+Fixed upstream in v0.1.2 and covered by an upstream test. `install-signer.sh`
+asserts the correct OID is in the checkout before it builds, so a pin move
+that lost it fails the install rather than the next certificate renewal.
 
 **Always verify on Windows before shipping:**
 
@@ -92,13 +98,37 @@ $s.Status                   # must be Valid
 $s.TimeStamperCertificate   # must NOT be null
 ```
 
-### 2. One login per TOTP window
+### 2. The 8-byte alignment padding
+
+`prepare()` hashed the file as it stood, but `embed()` then zero-padded it to
+an 8-byte boundary before appending the certificate table — and that padding
+lands **inside** the region Windows hashes. Every PE whose length was not
+already a multiple of 8 therefore got a signature Windows reports as
+**HashMismatch**: "the file has been changed by an unauthorized user or
+process". That is worse than shipping unsigned, because the binary looks
+tampered with.
+
+It hides perfectly behind an 8-aligned test file. The fixture used here was
+125440 bytes (8 × 15680) and verified clean while Velopack's real `Setup.exe`
+did not, and a broken signature reached a published release before it was
+caught.
+
+Fixed upstream in v0.1.2, with a regression test that signs a deliberately
+misaligned fixture. `install-signer.sh` asserts the padding is hashed before
+it builds.
+
+### 3. One login per TOTP window
 
 Certum rate‑limits logins per TOTP code: **two in the same 30‑second window
 succeed, a third is refused.** A release signs 3–4 files, each its own
 invocation, so a naive signer fails at random. `sign-stdin.sh` serialises on
-a lock and spends at most one login per window — roughly 30 s per file after
-the first, so about a minute of waiting per release. That is the price.
+a lock and spends at most one login per window.
+
+Since v0.1.5 `ssign` also caches the cloud session (`$HOME/.cache/ssign/session.json`,
+0600, valid ~30 min), and every file in a release is signed by the same `sign`
+user, so the second and later files normally reuse that session and skip both
+the login and the wait. The lock and the one-login-per-window rule still apply
+whenever a fresh login is actually needed.
 
 ## TOTP
 

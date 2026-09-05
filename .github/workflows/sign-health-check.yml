@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           curl -fsSL -o probe.exe \
-            https://raw.githubusercontent.com/Le-Syl21/ssign/f4fc7d7aca180982a11d9be4ee5aebd394ad5545/ssign-core/tests/fixtures/hello.exe
+            https://raw.githubusercontent.com/Le-Syl21/ssign/dbe67515789760bbb93499007723daf8048d4d4e/ssign-core/tests/fixtures/hello.exe
           printf 'ABCDE' >> probe.exe
           size=$(stat -c%s probe.exe)
           echo "probe.exe: $size bytes (mod 8 = $((size % 8)))"
