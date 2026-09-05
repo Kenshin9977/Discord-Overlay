@@ -1,0 +1,93 @@
+<UserControl x:Class="DiscordOverlay.App.Controls.ColorPickerBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             x:Name="Root">
+    <StackPanel Orientation="Horizontal">
+        <Button x:Name="SwatchButton"
+                Width="44" Height="32" Padding="0"
+                Click="OnSwatchClick"
+                ToolTip="{Binding PickerToolTip, ElementName=Root}">
+            <Border x:Name="Swatch" CornerRadius="3" Width="30" Height="18" />
+        </Button>
+
+        <ui:TextBox x:Name="HexBox"
+                    Width="104" Margin="8,0,0,0"
+                    MaxLength="7"
+                    TextChanged="OnHexTextChanged"
+                    VerticalAlignment="Center" />
+
+        <Popup x:Name="PickerPopup"
+               PlacementTarget="{Binding ElementName=SwatchButton}"
+               Placement="Bottom"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Fade">
+            <Border Background="{DynamicResource ApplicationBackgroundBrush}"
+                    BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Margin="0,4,0,0"
+                    Padding="12">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.35" Direction="270" />
+                </Border.Effect>
+
+                <StackPanel Width="248">
+                    <ItemsControl x:Name="Presets" Margin="0,0,0,12">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Width="26" Height="26" Padding="0" Margin="1"
+                                        Click="OnPresetClick"
+                                        Tag="{Binding Hex}"
+                                        ToolTip="{Binding Hex}">
+                                    <Border CornerRadius="3" Width="16" Height="16"
+                                            Background="{Binding Brush}" />
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="R" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <Slider x:Name="RedSlider" Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="255"
+                                IsSnapToTickEnabled="True" TickFrequency="1"
+                                ValueChanged="OnChannelChanged" VerticalAlignment="Center" />
+                        <TextBlock x:Name="RedValue" Grid.Row="0" Grid.Column="2" Width="30"
+                                   TextAlignment="Right" VerticalAlignment="Center" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="G" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <Slider x:Name="GreenSlider" Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="255"
+                                IsSnapToTickEnabled="True" TickFrequency="1"
+                                ValueChanged="OnChannelChanged" VerticalAlignment="Center" />
+                        <TextBlock x:Name="GreenValue" Grid.Row="1" Grid.Column="2" Width="30"
+                                   TextAlignment="Right" VerticalAlignment="Center" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="B" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <Slider x:Name="BlueSlider" Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="255"
+                                IsSnapToTickEnabled="True" TickFrequency="1"
+                                ValueChanged="OnChannelChanged" VerticalAlignment="Center" />
+                        <TextBlock x:Name="BlueValue" Grid.Row="2" Grid.Column="2" Width="30"
+                                   TextAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </StackPanel>
+</UserControl>

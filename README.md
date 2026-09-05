@@ -187,8 +187,8 @@ Host, port, password and Browser Source name changes take effect after an
 app restart since the OBS WebSocket connection is established once at
 startup. StreamKit overlay options pick up live.
 
-The `Streamkit` block has a dialog of its own — **Settings**, then **Overlay
-appearance...** — with a colour picker on each colour and a live push to OBS
+The `Streamkit` block has a window of its own — **Overlay appearance...**,
+straight from the tray menu or from **Settings** — with a colour picker on each colour and a live push to OBS
 when you save. It carries every setting the StreamKit voice widget reads, so
 there is nothing you have to drop to the file for.
 
@@ -260,10 +260,12 @@ dotnet test
 
 ```
 src/
-  DiscordOverlay.App/             WinForms tray app (entry, UI, hosting)
+  DiscordOverlay.App/             WPF tray app (entry, UI, hosting)
+    App.xaml                      Fluent theme dictionaries + shared styles
+    Controls/                     ColorPickerBox (swatch, hex, RGB popup)
     Hosting/                      Generic Host glue, tray, dispatcher,
                                   AutoStartManager, AppUpdater
-    Settings/                     Unified Settings / first-run dialog
+    Settings/                     SettingsWindow / OverlayAppearanceWindow
   DiscordOverlay.Core/            UI-free library
     Auth/                         OAuth flow, DPAPI store, DiscordSession
                                   (with IPC auto-reconnect)
@@ -288,7 +290,9 @@ forced command on a signing host, when the CI secrets are configured; see
 
 - **.NET 10 LTS** with C# `latest`, nullable + implicit usings on, central
   package management.
-- **WinForms** for tray + dialogs (BCL, no extra UI framework dep).
+- **WPF** with [WPF-UI](https://github.com/lepoco/wpfui) for the Fluent look —
+  Mica backdrop, dark theme following Windows, and no Windows App SDK
+  bootstrapper to ship. **H.NotifyIcon.Wpf** for the tray icon.
 - **Microsoft.Extensions.Hosting** Generic Host with DI, options, and
   background services.
 - **Serilog** with daily rolling file sink + Debug sink.

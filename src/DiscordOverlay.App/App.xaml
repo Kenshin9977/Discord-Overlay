@@ -1,0 +1,46 @@
+<Application x:Class="DiscordOverlay.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             ShutdownMode="OnExplicitShutdown">
+    <!-- OnExplicitShutdown because there is no main window: this lives in the
+         tray, and every window it opens is transient. The default
+         OnLastWindowClose would exit the moment the settings dialog closed. -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary Theme="Dark" />
+                <ui:ControlsDictionary />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- The theme is overridden at startup to follow Windows; the value
+                 above is only what the XAML designer shows. -->
+
+            <Thickness x:Key="FieldMargin">0,0,0,8</Thickness>
+            <Thickness x:Key="SectionMargin">0,0,0,16</Thickness>
+
+            <Style x:Key="SectionHeader" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Margin" Value="0,0,0,8" />
+            </Style>
+
+            <Style x:Key="FieldLabel" TargetType="TextBlock">
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="0,0,12,0" />
+            </Style>
+
+            <Style x:Key="Hint" TargetType="TextBlock">
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="Opacity" Value="0.65" />
+                <Setter Property="Margin" Value="0,0,0,12" />
+            </Style>
+
+            <Style x:Key="InlineHint" TargetType="TextBlock">
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Opacity" Value="0.65" />
+                <Setter Property="Margin" Value="12,0,0,0" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

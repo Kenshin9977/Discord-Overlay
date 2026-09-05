@@ -1,0 +1,161 @@
+<ui:FluentWindow x:Class="DiscordOverlay.App.Settings.SettingsWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 Width="580" Height="760"
+                 MinWidth="520" MinHeight="480"
+                 WindowStartupLocation="CenterScreen"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica"
+                 WindowCornerPreference="Round">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" x:Name="Titlebar" ShowMaximize="False">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="pack://application:,,,/Discord-Overlay.ico" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20,4,20,0">
+            <StackPanel>
+
+                <!-- Discord -->
+                <ui:Card Margin="{StaticResource SectionMargin}">
+                    <StackPanel>
+                        <TextBlock x:Name="DiscordHeader" Style="{StaticResource SectionHeader}" />
+
+                        <!-- Exactly one of these is ever visible. -->
+                        <StackPanel x:Name="SignedInPanel" Visibility="Collapsed">
+                            <TextBlock x:Name="SignedInStatus" Style="{StaticResource Hint}" />
+                            <ui:Button x:Name="SignOutButton" Click="OnSignOutClick" HorizontalAlignment="Left" />
+                        </StackPanel>
+
+                        <StackPanel x:Name="SignedOutPanel" Visibility="Collapsed">
+                            <TextBlock x:Name="WizardInstructions" Style="{StaticResource Hint}" />
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <ui:Button x:Name="OpenPortalButton" Click="OnOpenPortalClick"
+                                           Icon="{ui:SymbolIcon Open24}" />
+                                <ui:Button x:Name="CopyRedirectButton" Click="OnCopyRedirectClick"
+                                           Margin="8,0,0,0" Icon="{ui:SymbolIcon Copy24}" />
+                            </StackPanel>
+
+                            <Grid Margin="{StaticResource FieldMargin}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="130" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ClientIdLabel" Style="{StaticResource FieldLabel}" />
+                                <ui:TextBox x:Name="ClientIdBox" Grid.Column="1" />
+                            </Grid>
+
+                            <Grid Margin="{StaticResource FieldMargin}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="130" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ClientSecretLabel" Style="{StaticResource FieldLabel}" />
+                                <ui:PasswordBox x:Name="ClientSecretBox" Grid.Column="1" />
+                            </Grid>
+
+                            <ui:Button x:Name="SignInButton" Appearance="Primary" Click="OnSignInClick"
+                                       HorizontalAlignment="Left" Margin="0,8,0,0" />
+                            <ui:InfoBar x:Name="DiscordInfo" Margin="0,12,0,0" IsOpen="False" IsClosable="False" />
+                        </StackPanel>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- OBS -->
+                <ui:Card Margin="{StaticResource SectionMargin}">
+                    <StackPanel>
+                        <TextBlock x:Name="ObsHeader" Style="{StaticResource SectionHeader}" />
+                        <TextBlock x:Name="ObsHint" Style="{StaticResource Hint}" />
+
+                        <Grid Margin="{StaticResource FieldMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="HostLabel" Style="{StaticResource FieldLabel}" />
+                            <ui:TextBox x:Name="HostBox" Grid.Column="1" />
+                        </Grid>
+
+                        <Grid Margin="{StaticResource FieldMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="PortLabel" Style="{StaticResource FieldLabel}" />
+                            <ui:NumberBox x:Name="PortBox" Grid.Column="1" HorizontalAlignment="Left" Width="140"
+                                          Minimum="1" Maximum="65535" SmallChange="1" ClearButtonEnabled="False" />
+                        </Grid>
+
+                        <Grid Margin="{StaticResource FieldMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="PasswordLabel" Style="{StaticResource FieldLabel}" />
+                            <ui:PasswordBox x:Name="PasswordBox" Grid.Column="1" />
+                        </Grid>
+
+                        <Grid Margin="{StaticResource FieldMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="BrowserSourceLabel" Style="{StaticResource FieldLabel}" />
+                            <ui:TextBox x:Name="SourceNameBox" Grid.Column="1" />
+                        </Grid>
+
+                        <ui:Button x:Name="ObsTestButton" Click="OnTestObsClick"
+                                   HorizontalAlignment="Left" Margin="0,8,0,0"
+                                   Icon="{ui:SymbolIcon PlugConnected24}" />
+                        <ui:InfoBar x:Name="ObsInfo" Margin="0,12,0,0" IsOpen="False" IsClosable="False" />
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Overlay appearance -->
+                <ui:CardAction x:Name="OverlayCard" Click="OnOverlayAppearanceClick"
+                               Icon="{ui:SymbolIcon Color24}" Margin="{StaticResource SectionMargin}">
+                    <StackPanel>
+                        <TextBlock x:Name="OverlayHeader" FontWeight="SemiBold" />
+                        <TextBlock x:Name="OverlayHint" TextWrapping="Wrap" Opacity="0.65" Margin="0,4,0,0" />
+                    </StackPanel>
+                </ui:CardAction>
+
+                <!-- Startup -->
+                <ui:Card Margin="0,0,0,4">
+                    <StackPanel>
+                        <TextBlock x:Name="StartupHeader" Style="{StaticResource SectionHeader}" />
+                        <ui:ToggleSwitch x:Name="AutoStartToggle" />
+                    </StackPanel>
+                </ui:Card>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" Padding="20,12,20,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="StatusText" Grid.Column="0"
+                           VerticalAlignment="Center" Margin="0,0,12,0"
+                           TextTrimming="CharacterEllipsis" />
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <ui:Button x:Name="SaveButton" Appearance="Primary" Click="OnSaveClick" MinWidth="96" />
+                    <ui:Button x:Name="CancelButton" Margin="8,0,0,0" Click="OnCancelClick" MinWidth="96" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</ui:FluentWindow>

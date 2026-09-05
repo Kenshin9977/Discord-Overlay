@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.IO;
+using System.Windows;
 using DiscordOverlay.App.Resources;
 using DiscordOverlay.App.Settings;
 using DiscordOverlay.Core;
@@ -70,28 +73,38 @@ public sealed class AppHostedService(
             // No push callback here: OBS is not configured yet at first run, so
             // an appearance change can only land in the file and be carried by
             // the first push after setup.
-            using var form = new SettingsForm(
+            var window = new SettingsWindow(
                 session,
                 obsOptions.CurrentValue,
                 autoStart,
                 obsTester,
                 () => overlayOptions.CurrentValue);
-            return form.ShowDialog();
+            return window.ShowDialog();
         }).ConfigureAwait(false);
 
         if (cancellationToken.IsCancellationRequested) return false;
 
-        if (result == DialogResult.OK)
+        if (result == true)
         {
             logger.LogInformation("First-run setup completed; restarting to apply OBS settings");
-            await uiDispatcher.InvokeAsync(() =>
+            await uiDispatcher.InvokeAsync(async () =>
             {
-                MessageBox.Show(
-                    Strings.AppRestartMessage,
-                    Strings.AppName,
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-                Application.Restart();
+                var box = new Wpf.Ui.Controls.MessageBox
+                {
+                    Title = Strings.AppName,
+                    Content = Strings.AppRestartMessage,
+                    CloseButtonText = Strings.DialogClose,
+                };
+                await box.ShowDialogAsync().ConfigureAwait(true);
+
+                // WPF has no Application.Restart. Relaunch this exe and let the
+                // host shut down behind us.
+                var exe = Environment.ProcessPath;
+                if (!string.IsNullOrEmpty(exe))
+                {
+                    Process.Start(new ProcessStartInfo { FileName = exe, UseShellExecute = true });
+                }
+                Application.Current?.Shutdown();
             }).ConfigureAwait(false);
             return true;
         }

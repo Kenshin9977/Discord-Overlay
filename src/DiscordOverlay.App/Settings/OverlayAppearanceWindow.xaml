@@ -1,0 +1,195 @@
+<ui:FluentWindow x:Class="DiscordOverlay.App.Settings.OverlayAppearanceWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:controls="clr-namespace:DiscordOverlay.App.Controls"
+                 Width="520" SizeToContent="Height"
+                 MinHeight="400" MaxHeight="820"
+                 WindowStartupLocation="CenterScreen"
+                 ResizeMode="NoResize"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica"
+                 WindowCornerPreference="Round">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" x:Name="Titlebar" ShowMaximize="False" ShowMinimize="False">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="pack://application:,,,/Discord-Overlay.ico" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20,4,20,0">
+            <StackPanel>
+                <TextBlock x:Name="IntroText" Style="{StaticResource Hint}" />
+
+                <ui:CardExpander IsExpanded="True" Margin="0,0,0,8">
+                    <ui:CardExpander.Header>
+                        <TextBlock x:Name="TextHeader" Style="{StaticResource SectionHeader}" Margin="0" />
+                    </ui:CardExpander.Header>
+                    <StackPanel>
+                        <Grid Margin="{StaticResource FieldMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="TextColorLabel" Style="{StaticResource FieldLabel}" />
+                            <controls:ColorPickerBox x:Name="TextColorPicker" Grid.Column="1" />
+                        </Grid>
+
+                        <Grid Margin="{StaticResource FieldMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="TextSizeLabel" Style="{StaticResource FieldLabel}" />
+                            <ui:NumberBox x:Name="TextSizeBox" Grid.Column="1" Width="120"
+                                          Minimum="1" Maximum="200" SmallChange="1"
+                                          ClearButtonEnabled="False" />
+                        </Grid>
+
+                        <Grid Margin="{StaticResource FieldMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="TextOutlineColorLabel" Style="{StaticResource FieldLabel}" />
+                            <controls:ColorPickerBox x:Name="TextOutlineColorPicker" Grid.Column="1" />
+                        </Grid>
+
+                        <Grid Margin="{StaticResource FieldMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="TextOutlineSizeLabel" Style="{StaticResource FieldLabel}" />
+                            <ui:NumberBox x:Name="TextOutlineSizeBox" Grid.Column="1" Width="120"
+                                          Minimum="0" Maximum="20" SmallChange="1"
+                                          ClearButtonEnabled="False" />
+                            <TextBlock x:Name="TextOutlineSizeHint" Grid.Column="2" Style="{StaticResource InlineHint}" />
+                        </Grid>
+
+                        <Grid Margin="{StaticResource FieldMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="TextShadowColorLabel" Style="{StaticResource FieldLabel}" />
+                            <controls:ColorPickerBox x:Name="TextShadowColorPicker" Grid.Column="1" />
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="TextShadowSizeLabel" Style="{StaticResource FieldLabel}" />
+                            <ui:NumberBox x:Name="TextShadowSizeBox" Grid.Column="1" Width="120"
+                                          Minimum="0" Maximum="20" SmallChange="1"
+                                          ClearButtonEnabled="False" />
+                            <TextBlock x:Name="TextShadowSizeHint" Grid.Column="2" Style="{StaticResource InlineHint}" />
+                        </Grid>
+                    </StackPanel>
+                </ui:CardExpander>
+
+                <ui:CardExpander IsExpanded="True" Margin="0,0,0,8">
+                    <ui:CardExpander.Header>
+                        <TextBlock x:Name="BackgroundHeader" Style="{StaticResource SectionHeader}" Margin="0" />
+                    </ui:CardExpander.Header>
+                    <StackPanel>
+                        <Grid Margin="{StaticResource FieldMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="BackgroundColorLabel" Style="{StaticResource FieldLabel}" />
+                            <controls:ColorPickerBox x:Name="BackgroundColorPicker" Grid.Column="1" />
+                        </Grid>
+
+                        <Grid Margin="{StaticResource FieldMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="BackgroundOpacityLabel" Style="{StaticResource FieldLabel}" />
+                            <Slider x:Name="BackgroundOpacitySlider" Grid.Column="1"
+                                    Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center" />
+                            <TextBlock x:Name="BackgroundOpacityValue" Grid.Column="2" Width="48"
+                                       TextAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Grid Margin="{StaticResource FieldMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="BackgroundShadowColorLabel" Style="{StaticResource FieldLabel}" />
+                            <controls:ColorPickerBox x:Name="BackgroundShadowColorPicker" Grid.Column="1" />
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="BackgroundShadowSizeLabel" Style="{StaticResource FieldLabel}" />
+                            <ui:NumberBox x:Name="BackgroundShadowSizeBox" Grid.Column="1" Width="120"
+                                          Minimum="0" Maximum="40" SmallChange="1"
+                                          ClearButtonEnabled="False" />
+                            <TextBlock x:Name="BackgroundShadowSizeHint" Grid.Column="2" Style="{StaticResource InlineHint}" />
+                        </Grid>
+                    </StackPanel>
+                </ui:CardExpander>
+
+                <ui:CardExpander IsExpanded="True" Margin="0,0,0,4">
+                    <ui:CardExpander.Header>
+                        <TextBlock x:Name="DisplayHeader" Style="{StaticResource SectionHeader}" Margin="0" />
+                    </ui:CardExpander.Header>
+                    <StackPanel>
+                        <ui:ToggleSwitch x:Name="LimitSpeakingToggle" Margin="{StaticResource FieldMargin}" />
+                        <ui:ToggleSwitch x:Name="SmallAvatarsToggle" Margin="{StaticResource FieldMargin}" />
+                        <ui:ToggleSwitch x:Name="HideNamesToggle" Margin="{StaticResource FieldMargin}" />
+                        <ui:ToggleSwitch x:Name="StreamerAvatarFirstToggle" />
+                    </StackPanel>
+                </ui:CardExpander>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" Padding="20,12,20,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <ui:Button x:Name="ResetButton" Grid.Column="0" Click="OnResetClick" />
+
+                <TextBlock x:Name="StatusText" Grid.Column="1"
+                           VerticalAlignment="Center" TextAlignment="Center"
+                           Margin="12,0" TextTrimming="CharacterEllipsis" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <ui:Button x:Name="SaveButton" Appearance="Primary" Click="OnSaveClick" MinWidth="96" />
+                    <ui:Button x:Name="CancelButton" Margin="8,0,0,0" Click="OnCancelClick" MinWidth="96" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</ui:FluentWindow>

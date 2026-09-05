@@ -15,6 +15,9 @@ internal static class Strings
         // App / common
         ["AppName"] = "Discord-Overlay",
         ["AppRestartMessage"] = "Settings saved. Discord-Overlay will now restart so OBS settings take effect.",
+        ["DialogYes"] = "Yes",
+        ["DialogNo"] = "No",
+        ["DialogClose"] = "Close",
 
         // Wizard - Discord step
         ["WizardDiscordWindowTitle"] = "Discord-Overlay - Setup",
@@ -132,6 +135,7 @@ internal static class Strings
         ["TrayObsFormat"] = "OBS: {0}",
         ["TrayTooltipFormat"] = "Discord-Overlay - {0} | OBS {1}",
         ["TrayMenuSettings"] = "Settings...",
+        ["TrayMenuOverlayAppearance"] = "Overlay appearance...",
         ["TrayMenuCheckUpdates"] = "Check for updates",
         ["TrayMenuOpenLogFolder"] = "Open log folder",
         ["TrayMenuQuit"] = "Quit",
@@ -274,6 +278,7 @@ internal static class Strings
         ["TrayObsFormat"] = "OBS : {0}",
         ["TrayTooltipFormat"] = "Discord-Overlay - {0} | OBS {1}",
         ["TrayMenuSettings"] = "Paramètres...",
+        ["TrayMenuOverlayAppearance"] = "Apparence de l'overlay...",
         ["TrayMenuCheckUpdates"] = "Rechercher des mises à jour",
         ["TrayMenuOpenLogFolder"] = "Ouvrir le dossier des logs",
         ["TrayMenuQuit"] = "Quitter",
@@ -348,6 +353,11 @@ internal static class Strings
     public static string WizardObsSaveFailed(string message) => Format(nameof(WizardObsSaveFailed), message);
 
     // Settings
+    // Common dialog buttons
+    public static string DialogYes => Get();
+    public static string DialogNo => Get();
+    public static string DialogClose => Get();
+
     public static string SettingsWindowTitle => Get();
     public static string SettingsDiscordHeader => Get();
     public static string SettingsObsHeader => Get();
@@ -405,6 +415,7 @@ internal static class Strings
     public static string TrayChannelStarting => Get();
     public static string TrayObsStarting => Get();
     public static string TrayMenuSettings => Get();
+    public static string TrayMenuOverlayAppearance => Get();
     public static string TrayMenuCheckUpdates => Get();
     public static string TrayMenuOpenLogFolder => Get();
     public static string TrayMenuQuit => Get();

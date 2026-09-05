@@ -195,8 +195,8 @@ prennent effet après un redémarrage de l'app, car la connexion WebSocket OBS
 n'est établie qu'une fois au démarrage. Les options de l'overlay StreamKit, elles,
 sont prises en compte à chaud.
 
-Le bloc `Streamkit` a sa propre fenêtre — **Paramètres**, puis **Apparence de
-l'overlay...** — avec un sélecteur pour chaque couleur et un envoi immédiat à
+Le bloc `Streamkit` a sa propre fenêtre — **Apparence de l'overlay...**,
+directement depuis le menu de la barre d'état ou depuis **Paramètres** — avec un sélecteur pour chaque couleur et un envoi immédiat à
 OBS à l'enregistrement. Elle expose tous les réglages que lit le widget vocal
 StreamKit : rien ne vous oblige à passer par le fichier.
 
@@ -273,8 +273,10 @@ dotnet test
 
 ```
 src/
-  DiscordOverlay.App/             App WinForms en barre d'état (entrée, UI,
+  DiscordOverlay.App/             App WPF en barre d'état (entrée, UI,
                                   hébergement)
+    App.xaml                      Dictionnaires du thème Fluent + styles
+    Controls/                     ColorPickerBox (pastille, hex, popup RVB)
     Hosting/                      Glue du Generic Host, barre d'état,
                                   dispatcher, AutoStartManager, AppUpdater
     Settings/                     Fenêtre unifiée Paramètres / première config
@@ -303,8 +305,9 @@ releases restent vertes et non signées.
 
 - **.NET 10 LTS** avec C# `latest`, nullable + implicit usings activés, gestion
   centralisée des paquets.
-- **WinForms** pour la barre d'état et les fenêtres (BCL, aucune dépendance UI
-  supplémentaire).
+- **WPF** avec [WPF-UI](https://github.com/lepoco/wpfui) pour le rendu Fluent :
+  fond Mica, thème sombre suivant Windows, et aucun bootstrapper Windows App SDK
+  à embarquer. **H.NotifyIcon.Wpf** pour l'icône de la barre d'état.
 - **Microsoft.Extensions.Hosting** Generic Host avec DI, options et services
   d'arrière-plan.
 - **Serilog** avec sink fichier à rotation quotidienne + sink Debug.

@@ -2,12 +2,29 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
+    <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
     <RootNamespace>DiscordOverlay.App</RootNamespace>
     <AssemblyName>DiscordOverlay</AssemblyName>
     <ApplicationIcon>..\..\Discord-Overlay.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Also embedded, not just stamped on the exe: the tray icon is loaded as
+         an ImageSource through a pack:// URI, which needs it inside the
+         assembly. Extracting it from the running exe was the WinForms way and
+         does not survive single-file publishing well. -->
+    <Resource Include="..\..\Discord-Overlay.ico" Link="Discord-Overlay.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- App.xaml as a Page, not an ApplicationDefinition: the SDK would
+         otherwise generate its own Main and collide with Program.Main, which is
+         where the generic host is built. -->
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DiscordOverlay.Core\DiscordOverlay.Core.csproj" />
@@ -26,6 +43,8 @@
     <PackageReference Include="Serilog.Sinks.Debug" />
     <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="Velopack" />
+    <PackageReference Include="WPF-UI" />
+    <PackageReference Include="H.NotifyIcon.Wpf" />
   </ItemGroup>
 
 </Project>
