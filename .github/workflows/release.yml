@@ -334,10 +334,12 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
-      # wingetcreate carries the scope and the uninstall-entry configuration
-      # forward from the manifest already in winget-pkgs, so this only works once
-      # the first submission has been merged by hand. Until then it reports what
-      # it would have done rather than failing the run. See docs/packaging.md.
+      # wingetcreate *updates* a manifest already in winget-pkgs — it carries the
+      # scope and uninstall-entry configuration forward from it. So it cannot run
+      # until the first version has been submitted by hand (docs/packaging.md),
+      # and running it before then fails rather than doing nothing. Check the
+      # index first and skip cleanly, so a release is not red for a reason that
+      # is expected.
       - name: Submit the new version
         shell: pwsh
         env:
@@ -347,6 +349,30 @@ jobs:
         run: |
           if ([string]::IsNullOrWhiteSpace($env:TOKEN)) {
             Write-Warning "WINGET_TOKEN is not set. Would have submitted $($env:VERSION) from $($env:URL)."
+            exit 0
+          }
+
+          # Path is derived from the identifier Kenshin9977.DiscordOverlay:
+          # manifests/<first letter, lowercased>/<publisher>/<package>.
+          $indexPath = 'manifests/k/Kenshin9977/DiscordOverlay'
+          $headers = @{
+            Authorization = "Bearer $env:TOKEN"
+            'User-Agent'  = 'Discord-Overlay-release'
+            Accept        = 'application/vnd.github+json'
+          }
+          $published = $true
+          try {
+            Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/winget-pkgs/contents/$indexPath" `
+              -Headers $headers -ErrorAction Stop | Out-Null
+          } catch {
+            $published = $false
+          }
+
+          if (-not $published) {
+            $msg = "Kenshin9977.DiscordOverlay is not in winget-pkgs yet, so there is no manifest to update. " +
+                   "Submit $($env:VERSION) by hand once (see docs/packaging.md); every release after that is automatic."
+            Write-Warning $msg
+            Write-Output "::warning title=WinGet first submission still pending::$msg"
             exit 0
           }
 

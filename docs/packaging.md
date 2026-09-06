@@ -110,7 +110,10 @@ Create the first one:
    and does not install silently is the usual reason a first PR bounces.
 
 4. Copy them into your fork under
-   `manifests/k/Kenshin9977/Discord-Overlay/<version>/` and open a pull request.
+   `manifests/k/Kenshin9977/DiscordOverlay/<version>/` and open a pull request.
+   The path is derived from `PackageIdentifier`, not from the repository
+   name: `Kenshin9977.DiscordOverlay` means `Kenshin9977/DiscordOverlay`,
+   with no hyphen. The validation bot rejects a mismatch.
 
 ### Every release after that
 
