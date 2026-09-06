@@ -10,7 +10,7 @@ PackageName: Discord-Overlay
 PackageUrl: https://github.com/Kenshin9977/Discord-Overlay
 
 License: MIT
-LicenseUrl: https://github.com/Kenshin9977/Discord-Overlay/blob/main/LICENSE
+LicenseUrl: https://github.com/Kenshin9977/Discord-Overlay/blob/master/LICENSE
 Copyright: Copyright (c) Kenshin9977
 
 ShortDescription: Keeps your OBS Discord voice overlay pointed at the channel you are actually in.

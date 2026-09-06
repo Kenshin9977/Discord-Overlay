@@ -11,4 +11,4 @@ Get-Process -Name 'DiscordOverlay' -ErrorAction SilentlyContinue |
 $shortcut = Join-Path ([Environment]::GetFolderPath('CommonPrograms')) 'Discord-Overlay.lnk'
 if (Test-Path $shortcut) { Remove-Item $shortcut -Force -ErrorAction SilentlyContinue }
 
-Write-Host 'Your settings remain in %AppData%\Discord-Overlay.'
+Write-Host 'Your settings remain in %LocalAppData%\DiscordOverlay.'
