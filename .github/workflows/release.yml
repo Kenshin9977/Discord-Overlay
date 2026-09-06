@@ -249,6 +249,21 @@ jobs:
             Releases/releases.*.json
             Releases/assets.*.json
 
+      # The two jobs below are gated on a tag push, so a workflow_dispatch run
+      # publishes to GitHub and silently leaves WinGet and Chocolatey a version
+      # behind. Silently is the problem: say it, and say it as an annotation so
+      # it survives on the run summary rather than only in a log nobody opens.
+      - name: Point out that the package managers were skipped
+        if: github.event_name != 'push'
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $msg = "Released $env:VERSION to GitHub only. WinGet and Chocolatey publish on tag pushes, " +
+                 "so both are now a version behind. To publish there, tag the commit: git tag v$env:VERSION && git push origin v$env:VERSION"
+          Write-Warning $msg
+          Write-Output "::warning title=WinGet and Chocolatey skipped::$msg"
+
   # The two package managers get different artifacts, and the difference is not
   # arbitrary. Velopack installs per user and updates itself; Chocolatey runs
   # elevated, so Setup.exe there would install into the administrator's profile
