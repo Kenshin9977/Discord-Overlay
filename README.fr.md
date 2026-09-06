@@ -18,11 +18,13 @@ sans jamais éditer d'URL à la main.
 
 Tout tient dans une seule fenêtre, accessible depuis la barre d'état. La
 configuration de la connexion sur un onglet, les réglages du widget StreamKit
-sur l'autre, et un seul bouton Enregistrer pour les deux.
+sur l'autre, et un seul bouton Enregistrer pour les deux. L'interface suit la
+langue d'affichage de Windows — le français et l'anglais sont fournis, toute
+autre langue retombe sur l'anglais.
 
 | Connexion | Overlay |
 | --- | --- |
-| ![Onglet Connexion : Discord, WebSocket OBS et démarrage](docs/images/settings-connection.png) | ![Onglet Overlay : texte, fond et affichage du widget StreamKit](docs/images/settings-overlay.png) |
+| ![Onglet Connexion : Discord, WebSocket OBS et démarrage](docs/images/settings-connection.fr.png) | ![Onglet Overlay : texte, fond et affichage du widget StreamKit](docs/images/settings-overlay.fr.png) |
 
 ## Comment ça marche
 

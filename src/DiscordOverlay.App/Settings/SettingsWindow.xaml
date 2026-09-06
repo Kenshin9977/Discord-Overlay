@@ -19,7 +19,7 @@
 
         <ui:TitleBar Grid.Row="0" x:Name="Titlebar" ShowMaximize="False">
             <ui:TitleBar.Icon>
-                <ui:ImageIcon Source="pack://application:,,,/Discord-Overlay.ico" />
+                <ui:ImageIcon Source="pack://application:,,,/DiscordOverlay;component/Discord-Overlay.ico" />
             </ui:TitleBar.Icon>
         </ui:TitleBar>
 

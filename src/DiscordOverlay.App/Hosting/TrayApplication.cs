@@ -102,7 +102,7 @@ public sealed class TrayApplication : IDisposable
         trayIcon = new TaskbarIcon
         {
             IconSource = new BitmapImage(
-                new Uri("pack://application:,,,/Discord-Overlay.ico", UriKind.Absolute)),
+                new Uri("pack://application:,,,/DiscordOverlay;component/Discord-Overlay.ico", UriKind.Absolute)),
             ToolTipText = Strings.TrayInitialTooltip,
             ContextMenu = menu,
             MenuActivation = PopupActivationMode.RightClick,

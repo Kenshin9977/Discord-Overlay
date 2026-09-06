@@ -17,11 +17,12 @@ rooms mid-stream and the overlay follows you, no manual URL editing required.
 
 Everything lives in one window, reachable from the tray. Connection setup on one
 tab, the StreamKit overlay's own settings on the other, and a single Save for
-both.
+both. The interface follows your Windows display language — English and French
+are bundled, anything else falls back to English.
 
 | Connection | Overlay |
 | --- | --- |
-| ![Connection tab: Discord, OBS WebSocket and startup settings](docs/images/settings-connection.png) | ![Overlay tab: text, background and display settings for the StreamKit widget](docs/images/settings-overlay.png) |
+| ![Connection tab: Discord, OBS WebSocket and startup settings](docs/images/settings-connection.en.png) | ![Overlay tab: text, background and display settings for the StreamKit widget](docs/images/settings-overlay.en.png) |
 
 ## How it works
 
