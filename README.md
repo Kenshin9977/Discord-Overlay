@@ -13,6 +13,16 @@ rooms mid-stream and the overlay follows you, no manual URL editing required.
 > **forced channel moves are now detected** (when a moderator drags you into
 > another channel, the overlay updates correctly).
 
+## What it looks like
+
+Everything lives in one window, reachable from the tray. Connection setup on one
+tab, the StreamKit overlay's own settings on the other, and a single Save for
+both.
+
+| Connection | Overlay |
+| --- | --- |
+| ![Connection tab: Discord, OBS WebSocket and startup settings](docs/images/settings-connection.png) | ![Overlay tab: text, background and display settings for the StreamKit widget](docs/images/settings-overlay.png) |
+
 ## How it works
 
 1. The app talks to your local Discord client over its IPC pipe and listens for

@@ -14,6 +14,16 @@ sans jamais éditer d'URL à la main.
 > **les déplacements forcés sont maintenant détectés** (quand un modérateur vous
 > déplace dans un autre salon, l'overlay se met bien à jour).
 
+## À quoi ça ressemble
+
+Tout tient dans une seule fenêtre, accessible depuis la barre d'état. La
+configuration de la connexion sur un onglet, les réglages du widget StreamKit
+sur l'autre, et un seul bouton Enregistrer pour les deux.
+
+| Connexion | Overlay |
+| --- | --- |
+| ![Onglet Connexion : Discord, WebSocket OBS et démarrage](docs/images/settings-connection.png) | ![Onglet Overlay : texte, fond et affichage du widget StreamKit](docs/images/settings-overlay.png) |
+
 ## Comment ça marche
 
 1. L'app dialogue avec votre client Discord local via son canal IPC et écoute le
