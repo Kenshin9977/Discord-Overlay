@@ -7,12 +7,19 @@ using DiscordOverlay.App.Resources;
 namespace DiscordOverlay.App.Controls;
 
 /// <summary>
-/// A colour swatch, a hex box, and a popup with presets and RGB sliders.
+/// A colour swatch and a hex box, with PixiEditor's hue ring and
+/// saturation/value square in the popup.
 ///
-/// WPF-UI 4.3 ships no colour picker, and the Win32 <c>ChooseColor</c> dialog is
-/// the one piece of 1995 that would have shown through the Fluent styling. Hex
-/// stays the primary input because that is what StreamKit, OBS and every palette
-/// site hand you; the sliders are for when you are choosing rather than pasting.
+/// WPF-UI 4.3 ships no colour picker, so the wheel geometry comes from
+/// PixiEditor.ColorPicker (MIT) rather than being rewritten here. Only its
+/// <c>SquarePicker</c> though: the <c>StandardColorPicker</c> that wraps it adds
+/// a hex field and HSV/HSL/RGB spin boxes whose right-hand column is clipped at
+/// every width tried, 230 through 380 — its own layout bug, not a sizing mistake
+/// on this side. <c>SquarePicker</c> alone renders clean and carries none of the
+/// library's chrome, so it sits inside the Fluent popup without looking foreign.
+///
+/// The swatch and hex box stay ours, and hex remains the primary input: it is
+/// what StreamKit, OBS and every palette site hand you.
 /// </summary>
 public partial class ColorPickerBox : UserControl
 {
@@ -26,21 +33,11 @@ public partial class ColorPickerBox : UserControl
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
                 OnValueChanged));
 
-    /// <summary>Colours worth reaching for on a voice overlay: neutrals, then Discord's own palette.</summary>
-    private static readonly string[] PresetHexes =
-    [
-        "#ffffff", "#dcddde", "#b9bbbe", "#72767d", "#4f545c", "#36393f", "#2f3136", "#1e2124",
-        "#000000", "#5865f2", "#57f287", "#fee75c", "#eb459e", "#ed4245", "#faa61a", "#00b0f4",
-    ];
-
     private bool suppressFeedback;
 
     public ColorPickerBox()
     {
         InitializeComponent();
-        Presets.ItemsSource = PresetHexes
-            .Select(hex => new { Hex = hex, Brush = new SolidColorBrush(Parse(hex)) })
-            .ToArray();
         Apply(Value);
     }
 
@@ -72,12 +69,7 @@ public partial class ColorPickerBox : UserControl
         {
             HexBox.Text = normalized;
             Swatch.Background = new SolidColorBrush(color);
-            RedSlider.Value = color.R;
-            GreenSlider.Value = color.G;
-            BlueSlider.Value = color.B;
-            RedValue.Text = color.R.ToString(CultureInfo.InvariantCulture);
-            GreenValue.Text = color.G.ToString(CultureInfo.InvariantCulture);
-            BlueValue.Text = color.B.ToString(CultureInfo.InvariantCulture);
+            Picker.SelectedColor = color;
             if (Value != normalized) Value = normalized;
         }
         finally
@@ -88,19 +80,11 @@ public partial class ColorPickerBox : UserControl
 
     private void OnSwatchClick(object sender, RoutedEventArgs e) => PickerPopup.IsOpen = !PickerPopup.IsOpen;
 
-    private void OnPresetClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string hex })
-        {
-            Apply(hex);
-            PickerPopup.IsOpen = false;
-        }
-    }
-
-    private void OnChannelChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    private void OnPickerColorChanged(object? sender, RoutedEventArgs e)
     {
         if (suppressFeedback) return;
-        Apply($"#{(int)RedSlider.Value:x2}{(int)GreenSlider.Value:x2}{(int)BlueSlider.Value:x2}");
+        var c = Picker.SelectedColor;
+        Apply($"#{c.R:x2}{c.G:x2}{c.B:x2}");
     }
 
     private void OnHexTextChanged(object sender, TextChangedEventArgs e)

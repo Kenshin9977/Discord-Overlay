@@ -57,6 +57,7 @@
     <PackageReference Include="Velopack" />
     <PackageReference Include="WPF-UI" />
     <PackageReference Include="H.NotifyIcon.Wpf" />
+    <PackageReference Include="PixiEditor.ColorPicker" />
   </ItemGroup>
 
 </Project>
