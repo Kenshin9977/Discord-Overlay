@@ -52,3 +52,8 @@ appsettings.Development.json
 appsettings.Local.json
 secrets.json
 *.local.json
+
+# docs/images holds README screenshots and nothing else. A stray build output
+# landed here once; this keeps that from reaching a commit again.
+docs/images/*
+!docs/images/*.png
